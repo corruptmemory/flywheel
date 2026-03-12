@@ -68,6 +68,69 @@ The fundamental constraint for lights-out agent work is the **context window**. 
 - Monolithic specs that mix foundational types with high-level orchestration
 - Assuming the agent will "remember" context from earlier in the same spec — if a spec is long, the agent may lose early details
 
+## Builder Process Requirements (from Round 1)
+
+The builder agent MUST follow this workflow. These are non-negotiable.
+
+### "Taste the Soup" Principle
+
+No chef lets their patrons discover if the soup is good or bad — the chef tastes the soup first. The builder must:
+
+1. Work through the task list
+2. After each task: fire up the app, smoke-test with `curl` AND Playwright
+3. If anything fails: formulate a fix plan, loop back to step 1
+4. Only declare "ready for UAT" after a full self-UAT pass against the acceptance criteria
+
+### Incremental Testing
+
+During development, after completing each feature:
+- Run the application
+- Exercise the feature via curl (headless) and/or Playwright (browser)
+- Quick focused smoke tests — not comprehensive, just "does what I just built work?"
+- Fix problems immediately, don't let them accumulate
+
+### Mandatory Gates Before "Done"
+
+1. All unit tests pass (`./build.sh -t`)
+2. Race detector clean (`./build.sh -t` with `-race`)
+3. Full self-UAT pass (builder runs through UAT acceptance criteria)
+4. Code review (architecture, patterns, dead code)
+5. **Security review** — especially auth, session management, token handling. Any application with a login MUST prevent session replay attacks.
+
+### Commit Discipline
+
+Commit after each completed task, not one giant commit at the end. This provides rollback points and makes the UAT agent's job easier.
+
+## UAT Process Requirements (from Round 1)
+
+### Adversarial Posture
+
+The UAT agent must be mildly adversarial. It should:
+- Actively try to break things, not just confirm happy paths work
+- Push back against lazy explanations ("it's sessionless" is not an excuse for session replay)
+- Test edge cases: large files, concurrent uploads, malformed input, session expiry
+- Flag untested areas as risks (e.g., "real API integration not tested in mock mode")
+
+### Explicit Checklists
+
+UAT instructions must use checklist format with mandatory pass/fail per item, not prose descriptions. This combats forgetfulness (context window is the enemy for UAT too).
+
+### Round-Trip Testing
+
+Generate test data with `gen-csv`, upload it, verify processing output. Especially:
+- `--inject-errors` → upload → verify error reporting per row
+- Same player across multiple uploads → verify consistent hashing
+- Different players → verify different hashes
+
+## Round 1 Results
+
+See `feedback/round1.md` (user feedback) and `feedback/round1-analysis.md` (detailed analysis).
+
+- **UAT cycles:** 10-12 (estimated 2-3)
+- **Root cause:** Builder never tested its own work before handing off
+- **Builder grade:** B+ (architecture solid, process failed)
+- **UAT grade:** C+ (found real bugs but too shallow, not adversarial enough)
+
 ## Evaluation Loop
 
 1. Automated UAT must pass (feedback goes to `~/projects/file-uploader/uat-feedback/`)
