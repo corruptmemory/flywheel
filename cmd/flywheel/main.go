@@ -18,7 +18,7 @@ type Options struct {
 	PromptsDir      string        `short:"p" long:"prompts-dir" default:"./prompts" description:"Directory containing prompt templates"`
 	MaxRounds       int           `short:"m" long:"max-rounds" default:"5" description:"Maximum builder→UAT round trips"`
 	Timeout         time.Duration `short:"t" long:"timeout" default:"3h" description:"Max wall-clock time per agent run"`
-	SkipPermissions bool          `long:"skip-permissions" description:"Pass --dangerously-skip-permissions to claude (required for lights-out)"`
+	SkipPermissions bool          `long:"skip-permissions" description:"Pass --permission-mode bypassPermissions to claude (required for lights-out)"`
 	Model           string        `long:"model" description:"Model to use for claude sessions (e.g. sonnet, opus)"`
 }
 
@@ -141,7 +141,7 @@ func runClaude(dir, prompt string, opts Options) error {
 
 	args := []string{}
 	if opts.SkipPermissions {
-		args = append(args, "--dangerously-skip-permissions")
+		args = append(args, "--permission-mode", "bypassPermissions")
 	}
 	if opts.Model != "" {
 		args = append(args, "--model", opts.Model)
