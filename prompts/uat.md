@@ -5,7 +5,7 @@ Read the README.md in THIS repo for the full test checklist.
 ## Process
 
 1. Build the application: `cd {{BUILDER_DIR}} && ./build.sh -g -G -b`
-2. Start in mock mode: `./file-uploader server --mock`
+2. Start in mock mode: `./file-uploader --mock -p 8080`
 3. Systematically test EVERY item on the checklist in README.md
 4. Use curl for API/headless testing
 5. Use Playwright for browser/UI testing (browser is at /usr/bin/brave)

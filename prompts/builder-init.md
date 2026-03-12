@@ -1,15 +1,15 @@
-Read all specs in `build-specification/` (01 through 08). Plan your approach, then build the full application from scratch.
+Read all specs in `build-specification/` (01 through 15). Plan your approach, then build the full application from scratch.
 
 ## Process
 
-For EACH task in your plan:
+For EACH spec in order:
 
 1. Implement the feature with tests (TDD where possible)
 2. Run `./build.sh -g -G -b` — fix any build errors
 3. Run `./build.sh -t` — fix any test failures
-4. Start the app (`./file-uploader server --mock`) and smoke-test with curl
+4. Start the app (`./file-uploader --mock -p 8080`) and smoke-test with curl
 5. For UI features: also verify with Playwright (browser is at /usr/bin/brave)
-6. Fix any problems before moving to the next task
+6. Fix any problems before moving to the next spec
 7. Commit and push
 
 ## Before Declaring Done
@@ -17,7 +17,7 @@ For EACH task in your plan:
 You MUST complete ALL of these gates:
 
 1. All unit tests pass: `./build.sh -t`
-2. Race detector clean: run tests with `-race`
+2. Race detector clean: tests run with `-race` (build.sh -t already includes it)
 3. Start the app in mock mode and run through EVERY feature:
    - Login, dashboard, file upload, CSV processing, archive, settings, players DB, setup wizard
    - Use both curl (headless) and Playwright (browser)

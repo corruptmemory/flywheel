@@ -7,7 +7,7 @@ For EACH issue in the UAT feedback:
 1. Read the full report — understand the problem
 2. Fix the issue with appropriate tests
 3. Run `./build.sh -g -G -b && ./build.sh -t` — fix any failures
-4. Smoke-test the fix with curl and/or Playwright (browser is at /usr/bin/brave)
+4. Smoke-test the fix: start with `./file-uploader --mock -p 8080`, verify with curl and/or Playwright (browser is at /usr/bin/brave)
 5. Commit and push
 
 ## Before Declaring Done
