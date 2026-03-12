@@ -10,18 +10,63 @@ Flywheel is a **meta-project** — it contains no application code. It produces 
 
 ## Repository Structure
 
-- `README.md` — Rules of engagement, constraints, and evaluation criteria
-- Specifications and plans go into the **output directories** (not this repo):
-  - `~/projects/file-uploader` — Builder agent workspace (needs `README.md` + `build-specification/` directory)
-  - `~/projects/file-uploader-uat` — UAT agent workspace (independent acceptance testing)
+```
+cmd/flywheel/main.go    — Orchestration driver (Go CLI)
+prompts/                 — Agent prompt templates
+  builder-init.md        — Initial builder prompt (round 1)
+  builder-fix.md         — Fix prompt (rounds 2+, after UAT failure)
+  uat.md                 — UAT agent prompt (uses {{BUILDER_DIR}}, {{UAT_DIR}} vars)
+feedback/                — Post-mortem analysis from previous rounds
+  round1.md              — User feedback from round 1
+  round1-analysis.md     — Detailed analysis
+```
+
+### Output Directories (not in this repo)
+
+| Round | Builder Workspace | UAT Workspace |
+|-------|-------------------|---------------|
+| 1 | `~/projects/file-uploader` | `~/projects/file-uploader-uat` |
+| 2 | `~/projects/file-uploader-r2` | `~/projects/file-uploader-r2-uat` |
+
+## Flywheel Driver
+
+The `cmd/flywheel/` Go program orchestrates builder→UAT round trips:
+
+```bash
+# Build the driver
+go build -o flywheel ./cmd/flywheel/
+
+# Run (round 2 example)
+./flywheel \
+  --builder-dir ~/projects/file-uploader-r2 \
+  --uat-dir ~/projects/file-uploader-r2-uat \
+  --prompts-dir ~/projects/flywheel/prompts \
+  --max-rounds 5 \
+  --timeout 3h \
+  --skip-permissions \
+  --model opus
+```
+
+**Flags:**
+- `--skip-permissions` — passes `--dangerously-skip-permissions` to claude (required for lights-out)
+- `--model` — model override (e.g., `sonnet` for smoke tests, `opus` for real builds)
+- `--max-rounds` — safety cap on builder→UAT cycles (default: 5)
+- `--timeout` — wall-clock limit per agent session (default: 3h)
+
+**Loop logic:**
+1. Round 1: load `builder-init.md` → builder builds from scratch
+2. UAT: load `uat.md` → adversarial testing, writes PASS or FAIL to `done`
+3. If FAIL: load `builder-fix.md` → builder reads `uat-feedback/`, fixes issues
+4. Repeat until PASS or max rounds
+
+The driver clears `CLAUDECODE` env var from child processes to avoid nested-session detection.
 
 ## Workflow
 
 1. Investigate `~/idpair/idpair-central` source project deeply
-2. Write specifications as Markdown docs in `~/projects/file-uploader/build-specification/`
-3. Builder agents execute specs lights-out in `~/projects/file-uploader`
-4. UAT agents independently test in `~/projects/file-uploader-uat`
-5. Review outputs, refine specs, iterate until acceptable
+2. Write specifications as Markdown docs in the builder workspace's `build-specification/`
+3. Run the flywheel driver — builder and UAT agents execute lights-out
+4. Review outputs, refine specs, iterate until acceptable
 
 ## Target Stack (for specs you write)
 
@@ -131,8 +176,19 @@ See `feedback/round1.md` (user feedback) and `feedback/round1-analysis.md` (deta
 - **Builder grade:** B+ (architecture solid, process failed)
 - **UAT grade:** C+ (found real bugs but too shallow, not adversarial enough)
 
+## Round 2 (Current)
+
+Running in `~/projects/file-uploader-r2` and `~/projects/file-uploader-r2-uat`.
+
+Key changes from round 1:
+- 15 task-sized specs (~200-400 lines) instead of 8 topic-sized specs (~800+ lines)
+- Each spec has dependency declarations and inline tests
+- Added `chi/render` to the tech stack
+- Separated reference data (CSV column mappings) from implementation logic
+- Flywheel driver automates the builder→UAT loop
+
 ## Evaluation Loop
 
-1. Automated UAT must pass (feedback goes to `~/projects/file-uploader/uat-feedback/`)
+1. Automated UAT must pass (feedback goes to builder workspace's `uat-feedback/`)
 2. This project reviews builder + UAT outputs and refines specs
 3. User gives final review — iterate until accepted

@@ -25,17 +25,34 @@ agent to do all the coding in a "lights-out" manner.
 
 ## Outputs
 
-You will be putting your output into 2 locations
+Each round produces a builder workspace and a UAT workspace:
 
-- `~/projects/file-uploader` -- this is the directory where the
-  "lights-out" agent(s) will run. This needs a solid README.md and a
-  `build-specification` directory where you will put all your
-  specifications and plans. Initialize git in this directory and
-  create a private remote on GitHub using `gh`.
-- `~/projects/file-uploader-uat` -- this directory is where you will put
-  documents related to _independent "user acceptance testing."_ We are
-  going to try to automate UAT with agents as well. Initialize git in
-  this directory and create a private remote on GitHub using `gh`
+| Round | Builder | UAT | Status |
+|-------|---------|-----|--------|
+| 1 | `~/projects/file-uploader` | `~/projects/file-uploader-uat` | Complete (B+ builder, C+ UAT) |
+| 2 | `~/projects/file-uploader-r2` | `~/projects/file-uploader-r2-uat` | In progress |
+
+Each builder workspace needs a `README.md`, `CLAUDE.md`, and
+`build-specification/` directory. Each UAT workspace needs a
+`README.md` with an adversarial checklist.
+
+## Orchestration Driver
+
+The `cmd/flywheel/` Go program automates the builder→UAT loop:
+
+```bash
+go build -o flywheel ./cmd/flywheel/
+./flywheel \
+  --builder-dir ~/projects/file-uploader-r2 \
+  --uat-dir ~/projects/file-uploader-r2-uat \
+  --prompts-dir ~/projects/flywheel/prompts \
+  --max-rounds 5 --timeout 3h \
+  --skip-permissions --model opus
+```
+
+The driver spawns `claude` sessions for each phase, checks for a
+`done` file after each, reads the UAT verdict (PASS/FAIL), and loops
+until PASS or max rounds.
 
 ## Starting Point
 
