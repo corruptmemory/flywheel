@@ -1,16 +1,33 @@
-Read all specs in `build-specification/` (01 through 15). Plan your approach, then build the full application from scratch.
+Read all specs in `build-specification/` (01 through 15). Plan your approach, then build the full application.
+
+## Sub-Agent Implementation Strategy
+
+**CRITICAL:** Do NOT try to implement all 15 specs in your own context window. You will run out of context and start stubbing things out. Instead:
+
+1. Read all specs and create a high-level implementation plan
+2. For EACH spec, spawn a sub-agent (using the Agent tool) to implement it:
+   - Pass the sub-agent the spec file path and its declared dependencies
+   - The sub-agent reads the spec, implements it, writes tests, and verifies the build compiles
+   - Each sub-agent gets a fresh context window — this is why the specs were designed to be self-contained
+3. After each sub-agent completes, YOU verify:
+   - `./build.sh -g -G -b` succeeds
+   - `./build.sh -t` passes
+   - Quick smoke-test with curl if applicable
+4. Fix any integration issues between specs before moving to the next
+5. Commit and push after each spec
+
+The specs have explicit dependency declarations at the top (e.g., "Dependencies: 03-configuration.md (ApplicationConfig)"). The sub-agent should read those referenced specs to understand the interfaces it depends on.
 
 ## Process
 
 For EACH spec in order:
 
-1. Implement the feature with tests (TDD where possible)
-2. Run `./build.sh -g -G -b` — fix any build errors
-3. Run `./build.sh -t` — fix any test failures
-4. Start the app (`./file-uploader --mock -p 8080`) and smoke-test with curl
-5. For UI features: also verify with Playwright (browser is at /usr/bin/brave)
-6. Fix any problems before moving to the next spec
-7. Commit and push
+1. Spawn a sub-agent to implement the spec with tests
+2. After the sub-agent finishes: build, test, verify
+3. Start the app (`./file-uploader --mock -p 8080`) and smoke-test with curl
+4. For UI features: also verify with Playwright (browser is at /usr/bin/brave)
+5. Fix any problems before moving to the next spec
+6. Commit and push
 
 ## Before Declaring Done
 
