@@ -549,18 +549,38 @@ func watchForDone(ctx context.Context, cancel context.CancelFunc, doneFile strin
 	}
 }
 
-// gitWorktreeClean returns true if there are no unstaged or uncommitted changes to tracked files.
+// stateFiles are ephemeral files managed by the driver, not code the builder should commit.
+// The builder writes progress/done files after its final commit, so these may be dirty.
+var stateFiles = map[string]bool{
+	"progress":             true,
+	"builder_done":         true,
+	"code_review_done":     true,
+	"security_review_done": true,
+	"dev_test_done":        true,
+	"uat_done":             true,
+}
+
+// gitWorktreeClean returns true if there are no unstaged or uncommitted changes to tracked files,
+// ignoring ephemeral state files (progress, *_done) that the driver manages.
 func gitWorktreeClean(dir string) bool {
-	// Check for unstaged changes
-	diff := exec.Command("git", "diff", "--quiet")
-	diff.Dir = dir
-	if err := diff.Run(); err != nil {
+	cmd := exec.Command("git", "status", "--porcelain")
+	cmd.Dir = dir
+	out, err := cmd.Output()
+	if err != nil {
 		return false
 	}
-	// Check for staged but uncommitted changes
-	diffCached := exec.Command("git", "diff", "--cached", "--quiet")
-	diffCached.Dir = dir
-	return diffCached.Run() == nil
+	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		if line == "" {
+			continue
+		}
+		// git status --porcelain format: XY filename
+		file := strings.TrimSpace(line[2:])
+		file = filepath.Base(file) // strip any path prefix
+		if !stateFiles[file] {
+			return false // non-state file is dirty
+		}
+	}
+	return true
 }
 
 // gitRemoteUpToDate returns true if the local branch has no unpushed commits.
