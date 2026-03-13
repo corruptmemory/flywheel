@@ -102,7 +102,7 @@ The session will end automatically once the done file is detected.
 // RunLog is the top-level entry written to the JSONL log file after each flywheel execution.
 type RunLog struct {
 	StartTime time.Time `json:"start_time"`
-	EndTime   time.Time `json:"end_time,omitempty"`
+	EndTime   time.Time `json:"end_time,omitzero"`
 	Duration  string    `json:"duration,omitempty"`
 	DurationS float64   `json:"duration_seconds,omitempty"`
 	Model     string    `json:"model,omitempty"`
@@ -225,7 +225,7 @@ func clearInnerLoopDoneFiles(df doneFiles) {
 	os.Remove(df.DevTest)
 }
 
-func prePhaseCleanup(action phaseAction, df doneFiles, opts Options) {
+func prePhaseCleanup(action phaseAction, opts Options) {
 	switch action.Phase {
 	case PhaseCodeReview:
 		clearDir(filepath.Join(opts.BuilderDir, "code-review"))
@@ -384,7 +384,7 @@ func main() {
 
 		// Pre-phase cleanup
 		os.Remove(action.DoneFile)
-		prePhaseCleanup(action, df, opts)
+		prePhaseCleanup(action, opts)
 
 		// Build the prompt
 		var prompt string
