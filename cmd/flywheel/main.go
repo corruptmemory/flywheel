@@ -225,8 +225,14 @@ func clearInnerLoopDoneFiles(df doneFiles) {
 	os.Remove(df.DevTest)
 }
 
-func prePhaseCleanup(action phaseAction, opts Options) {
+func prePhaseCleanup(action phaseAction, df doneFiles, opts Options) {
 	switch action.Phase {
+	case PhaseBuild:
+		// When advancing to next spec, clear all inner-loop done files
+		// so the new spec starts with a clean slate.
+		if action.Scenario == ScenarioNextSpec {
+			clearInnerLoopDoneFiles(df)
+		}
 	case PhaseCodeReview:
 		clearDir(filepath.Join(opts.BuilderDir, "code-review"))
 	case PhaseSecurityReview:
@@ -384,7 +390,7 @@ func main() {
 
 		// Pre-phase cleanup
 		os.Remove(action.DoneFile)
-		prePhaseCleanup(action, opts)
+		prePhaseCleanup(action, df, opts)
 
 		// Build the prompt
 		var prompt string
@@ -442,14 +448,11 @@ func main() {
 			}
 		}
 
-		// Reset gate counter when dev test passes (spec advances)
-		if action.Phase == PhaseDevTest && strings.EqualFold(verdict, "PASS") {
-			gateFailCount = 0
-			clearInnerLoopDoneFiles(df)
-		}
-
-		// Reset gate counter on UAT READY
-		if action.Phase == PhaseDevTest && strings.EqualFold(verdict, "UAT READY") {
+		// Reset gate counter when dev test passes or UAT READY
+		// Note: done files are NOT cleared here — determineNextPhase needs to see
+		// dev_test_done PASS to route to ScenarioNextSpec. Clearing happens in
+		// prePhaseCleanup when the next builder invocation starts.
+		if action.Phase == PhaseDevTest && (strings.EqualFold(verdict, "PASS") || strings.EqualFold(verdict, "UAT READY")) {
 			gateFailCount = 0
 		}
 	}
