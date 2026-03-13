@@ -23,7 +23,8 @@ type Options struct {
 	SkipPermissions bool          `long:"skip-permissions" description:"Pass --permission-mode bypassPermissions to claude (required for lights-out)"`
 	Model           string        `long:"model" description:"Model to use for claude sessions (e.g. sonnet, opus)"`
 	LogFile         string        `short:"l" long:"log-file" default:"flywheel-runs.jsonl" description:"JSONL file for timing logs"`
-	Start           string        `long:"start" choice:"build" choice:"fix" choice:"uat" default:"build" description:"Entry point: build (fresh), fix (resume at builder-fix), uat (resume at UAT)"`
+	Start           string        `long:"start" choice:"build" choice:"fix" choice:"uat" default:"build" description:"Entry point: build (fresh), fix (builder-fix), uat (skip to UAT)"`
+	Resume          bool          `long:"resume" description:"Read log file to determine start phase and round automatically"`
 }
 
 const builderSuffix = `
@@ -97,23 +98,39 @@ func main() {
 	startRound := 1
 	startPhase := opts.Start // "build", "fix", or "uat"
 
-	if startPhase == "fix" || startPhase == "uat" {
+	if opts.Resume {
 		lastRun := readLastRunLog(opts.LogFile)
 		if lastRun == nil {
-			die("--start %s requires a previous run in %s, but none found", startPhase, opts.LogFile)
+			die("--resume: no previous run found in %s", opts.LogFile)
 		}
 		if len(lastRun.Rounds) == 0 {
-			die("--start %s: last run in %s has no rounds", startPhase, opts.LogFile)
+			die("--resume: last run in %s has no rounds", opts.LogFile)
 		}
 		lastRound := lastRun.Rounds[len(lastRun.Rounds)-1]
-		startRound = lastRound.Round
 
-		// If last round completed UAT with FAIL, the fix belongs to the NEXT round
-		if startPhase == "fix" && lastRound.LastPhase == "uat" {
-			startRound = lastRound.Round + 1
+		switch lastRound.LastPhase {
+		case "builder":
+			// Builder finished, UAT never ran
+			startPhase = "uat"
+			startRound = lastRound.Round
+		case "uat":
+			if strings.EqualFold(lastRound.Verdict, "FAIL") {
+				// UAT failed — next step is builder-fix on next round
+				startPhase = "fix"
+				startRound = lastRound.Round + 1
+			} else {
+				// UAT passed — nothing to resume
+				fmt.Println("[flywheel] Last run passed — nothing to resume.")
+				return
+			}
+		default:
+			die("--resume: last round has unknown phase %q", lastRound.LastPhase)
 		}
 
 		fmt.Printf("[flywheel] Resuming at %s, round %d (from %s)\n", startPhase, startRound, opts.LogFile)
+	} else if startPhase != "build" {
+		// --start fix or --start uat without --resume: stateless, start at round 1
+		fmt.Printf("[flywheel] Starting at %s phase, round %d\n", startPhase, startRound)
 	}
 
 	runStart := time.Now()
