@@ -363,8 +363,9 @@ func runClaude(dir, prompt, doneFile string, opts Options) error {
 	cmd.Dir = dir
 	// Clear CLAUDECODE env var so child claude sessions don't think they're nested
 	cmd.Env = filterEnv(os.Environ(), "CLAUDECODE")
-	// Put child in its own process group so signals to it don't kill the driver
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	// Note: we do NOT use Setpgid here — claude needs TTY access for its UI,
+	// which requires being in the terminal's foreground process group.
+	// Signal isolation is handled by signal.Ignore in main() instead.
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
