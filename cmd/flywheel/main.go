@@ -332,14 +332,17 @@ func appendPhaseLog(runLog *RunLog, action phaseAction, prompt string, start, en
 
 func finishRunLog(runLog *RunLog, runStart time.Time, outcome, logFile string) {
 	runLog.Outcome = outcome
+	flushRunLog(logFile, runLog, runStart)
+}
+
+// flushRunLog rewrites the log file with the current run state.
+// Called after every phase so timing data survives crashes/kills.
+func flushRunLog(path string, runLog *RunLog, runStart time.Time) {
 	runLog.EndTime = time.Now()
 	runLog.Duration = runLog.EndTime.Sub(runStart).Round(time.Second).String()
 	runLog.DurationS = runLog.EndTime.Sub(runStart).Seconds()
-	writeRunLog(logFile, *runLog)
-}
 
-func writeRunLog(path string, entry RunLog) {
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "warning: could not write log to %s: %v\n", path, err)
 		return
@@ -348,7 +351,7 @@ func writeRunLog(path string, entry RunLog) {
 
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "")
-	if err := enc.Encode(entry); err != nil {
+	if err := enc.Encode(runLog); err != nil {
 		fmt.Fprintf(os.Stderr, "warning: could not encode log entry: %v\n", path)
 	}
 }
@@ -447,8 +450,9 @@ func main() {
 		verdict := readDoneVerdict(action.DoneFile)
 		fmt.Printf("[flywheel] %s: %s (%s)\n", action.Phase, verdict, phaseDur)
 
-		// Log the phase
+		// Log the phase (flush immediately so data survives kills)
 		appendPhaseLog(&runLog, action, promptLabel, phaseStart, phaseEnd, verdict)
+		flushRunLog(opts.LogFile, &runLog, runStart)
 
 		// Track gate failures for --max-gate-retries
 		if action.Phase != PhaseBuild && action.Phase != PhaseUAT {
