@@ -27,10 +27,26 @@ agent to do all the coding in a "lights-out" manner.
 
 Each round produces a builder workspace and a UAT workspace:
 
-| Round | Builder | UAT | Status |
-|-------|---------|-----|--------|
-| 1 | `~/projects/file-uploader` | `~/projects/file-uploader-uat` | Complete (B+ builder, C+ UAT) |
-| 2 | `~/projects/file-uploader-r2` | `~/projects/file-uploader-r2-uat` | In progress |
+| Round | Builder | UAT | Cycles | Builder | UAT | Status |
+|-------|---------|-----|--------|---------|-----|--------|
+| 1 | `~/projects/file-uploader` | `~/projects/file-uploader-uat` | 10-12 | B+ | C+ | Complete |
+| 2 | `~/projects/file-uploader-r2` | `~/projects/file-uploader-r2-uat` | 5 | A- | A | Complete |
+
+### Round-over-Round Progress
+
+| Metric | Round 1 | Round 2 |
+|--------|---------|---------|
+| UAT cycles to pass | 10-12 | 5 |
+| Spec design | 8 topic-sized (~800+ lines) | 15 task-sized (~200-400 lines) |
+| Sub-agent delegation | No | Yes (dependency graph) |
+| UAT test automation | No | 111+ automated test points |
+| UAT spec awareness | No | Mandatory spec citations |
+| Go test coverage (lines) | Unknown | 5,358 (67% test-to-code ratio) |
+| Total application code | Unknown | 17,569 lines |
+| Build time (initial) | Unknown | 82 minutes |
+
+See `feedback/round1.md`, `feedback/round1-analysis.md`, and
+`feedback/round2-assessment.md` for detailed post-mortems.
 
 Each builder workspace needs a `README.md`, `CLAUDE.md`, and
 `build-specification/` directory. Each UAT workspace needs a
@@ -46,13 +62,32 @@ go build -o flywheel ./cmd/flywheel/
   --builder-dir ~/projects/file-uploader-r2 \
   --uat-dir ~/projects/file-uploader-r2-uat \
   --prompts-dir ~/projects/flywheel/prompts \
-  --max-rounds 5 --timeout 3h \
+  --max-rounds 20 \
   --skip-permissions --model opus
 ```
 
-The driver spawns `claude` sessions for each phase, checks for a
-`done` file after each, reads the UAT verdict (PASS/FAIL), and loops
-until PASS or max rounds.
+**Flags:**
+- `--skip-permissions` — passes `--permission-mode bypassPermissions` to claude
+- `--model` — model override (e.g., `sonnet` for smoke tests, `opus` for real builds)
+- `--max-rounds` — safety cap on builder→UAT cycles (default: 5)
+- `--timeout` — per-session wall-clock limit (default: 0 = unlimited)
+- `--retries` — retry count per phase if claude crashes without done file (default: 2)
+- `--log-file` — JSONL timing log (default: `flywheel-runs.jsonl`)
+- `--start [build|fix|uat]` — stateless entry point (default: build)
+- `--resume` — read log file to determine start phase and round automatically
+
+**Loop logic:**
+1. Round 1: load `builder-init.md` → builder builds from scratch
+2. UAT: load `uat.md` → adversarial testing, writes PASS or FAIL to `done`
+3. If FAIL: load `builder-fix.md` → builder reads `uat-feedback/`, fixes issues
+4. Repeat until PASS or max rounds
+
+**Resilience features:**
+- Ignores SIGTERM/SIGUSR1/SIGUSR2/SIGHUP (child signals don't kill driver)
+- Retries on crash (done-file is the authority, not exit code)
+- Done-file watcher verifies git is clean and pushed before terminating session
+- JSONL logging enables `--resume` after driver restart
+- Filters `CLAUDECODE` env var to prevent nested-session detection
 
 ## Starting Point
 

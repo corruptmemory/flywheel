@@ -11,14 +11,16 @@ Flywheel is a **meta-project** — it contains no application code. It produces 
 ## Repository Structure
 
 ```
-cmd/flywheel/main.go    — Orchestration driver (Go CLI)
-prompts/                 — Agent prompt templates
-  builder-init.md        — Initial builder prompt (round 1)
-  builder-fix.md         — Fix prompt (rounds 2+, after UAT failure)
-  uat.md                 — UAT agent prompt (uses {{BUILDER_DIR}}, {{UAT_DIR}} vars)
-feedback/                — Post-mortem analysis from previous rounds
-  round1.md              — User feedback from round 1
-  round1-analysis.md     — Detailed analysis
+cmd/flywheel/main.go       — Orchestration driver (Go CLI)
+prompts/                    — Agent prompt templates
+  builder-init.md           — Initial builder prompt (round 1 of each run)
+  builder-fix.md            — Fix prompt (rounds 2+, after UAT failure)
+  uat.md                    — UAT agent prompt (uses {{BUILDER_DIR}}, {{UAT_DIR}} vars)
+feedback/                   — Post-mortem analysis from previous rounds
+  round1.md                 — User feedback from round 1
+  round1-analysis.md        — Detailed analysis of round 1
+  round2-assessment.md      — Comprehensive round 2 assessment with source comparison
+flywheel-runs.jsonl         — JSONL timing logs (gitignored)
 ```
 
 ### Output Directories (not in this repo)
@@ -33,25 +35,25 @@ feedback/                — Post-mortem analysis from previous rounds
 The `cmd/flywheel/` Go program orchestrates builder→UAT round trips:
 
 ```bash
-# Build the driver
 go build -o flywheel ./cmd/flywheel/
 
-# Run (round 2 example)
 ./flywheel \
   --builder-dir ~/projects/file-uploader-r2 \
   --uat-dir ~/projects/file-uploader-r2-uat \
   --prompts-dir ~/projects/flywheel/prompts \
-  --max-rounds 5 \
-  --timeout 3h \
-  --skip-permissions \
-  --model opus
+  --max-rounds 20 \
+  --skip-permissions --model opus
 ```
 
-**Flags:**
-- `--skip-permissions` — passes `--dangerously-skip-permissions` to claude (required for lights-out)
+**Key flags:**
+- `--skip-permissions` — passes `--permission-mode bypassPermissions` to claude
 - `--model` — model override (e.g., `sonnet` for smoke tests, `opus` for real builds)
 - `--max-rounds` — safety cap on builder→UAT cycles (default: 5)
-- `--timeout` — wall-clock limit per agent session (default: 3h)
+- `--timeout` — per-session wall-clock limit (default: 0 = unlimited)
+- `--retries` — retries per phase if claude crashes without done file (default: 2)
+- `--log-file` — JSONL timing log (default: `flywheel-runs.jsonl`)
+- `--start [build|fix|uat]` — stateless entry point
+- `--resume` — log-driven automatic resume
 
 **Loop logic:**
 1. Round 1: load `builder-init.md` → builder builds from scratch
@@ -59,7 +61,7 @@ go build -o flywheel ./cmd/flywheel/
 3. If FAIL: load `builder-fix.md` → builder reads `uat-feedback/`, fixes issues
 4. Repeat until PASS or max rounds
 
-The driver clears `CLAUDECODE` env var from child processes to avoid nested-session detection.
+**Resilience:** Ignores SIGTERM/SIGUSR1/SIGUSR2/SIGHUP (child signals don't kill driver), retries on crash, verifies git clean+pushed before terminating, JSONL logging for resume, filters `CLAUDECODE` env var.
 
 ## Workflow
 
@@ -176,16 +178,79 @@ See `feedback/round1.md` (user feedback) and `feedback/round1-analysis.md` (deta
 - **Builder grade:** B+ (architecture solid, process failed)
 - **UAT grade:** C+ (found real bugs but too shallow, not adversarial enough)
 
-## Round 2 (Current)
+## Round 2 Results
 
-Running in `~/projects/file-uploader-r2` and `~/projects/file-uploader-r2-uat`.
+**Workspace:** `~/projects/file-uploader-r2` and `~/projects/file-uploader-r2-uat`
+**Verdict:** UAT ACCEPTED after 5 cycles (vs 10-12 in round 1)
+**Builder grade:** A- | **UAT grade:** A
+**Full assessment:** `feedback/round2-assessment.md`
 
-Key changes from round 1:
+### What Changed from Round 1
+
 - 15 task-sized specs (~200-400 lines) instead of 8 topic-sized specs (~800+ lines)
 - Each spec has dependency declarations and inline tests
-- Added `chi/render` to the tech stack
-- Separated reference data (CSV column mappings) from implementation logic
-- Flywheel driver automates the builder→UAT loop
+- Sub-agent delegation: builder constructs dependency graph, delegates per spec
+- Automated UAT test harness: 111+ test points in bash scripts + Playwright
+- UAT reads build specs and cites them in FAIL reports
+- No BLOCKED verdicts — everything is PASS or FAIL
+- Flywheel driver automates the builder→UAT loop with crash recovery
+
+### What the Builder Produced
+
+- 7,960 lines Go source, 5,358 lines tests (67% test-to-code ratio)
+- All 15 specs implemented with one-commit-per-spec discipline
+- Actor pattern throughout (zero mutexes in production code)
+- All 10 CSV types, Argon2 hashing, player DB, SSE broadcaster, worker pool
+- Zero TODO/FIXME/HACK comments
+- Known source bug (hash collision) NOT carried forward
+
+### Key Failure: RunningApp Wiring (Round 4)
+
+The builder initially wired `NewMockRunningApp` for ALL code paths — not just mock mode. The real pipeline (CSV worker pool, SSE, player DB, archive) was implemented but never connected. This is the same context-window pressure pattern from round 1, but the sub-agent strategy made it a one-commit fix rather than a death spiral.
+
+**Lesson:** Specs 10 and 11 need explicit "wire the real implementation in non-mock mode" mandates.
+
+### UAT Test Harness
+
+The UAT agent built genuine test automation in the UAT workspace:
+- `test-harness.sh` — 65 automated HTTP/curl tests
+- `test-harness-extra.sh` — 46 supplementary tests (concurrent uploads, hashing, filtering)
+- `uat-playwright.js` — 530+ lines of browser tests, 25+ screenshots
+- Fully idempotent, builder can re-run to verify fixes
+
+## Lessons Learned (Cumulative)
+
+### Spec Engineering
+
+1. **Task-sized specs (200-400 lines) over topic-sized (800+).** Validated in round 2 — average 5.5 min per spec.
+2. **Explicit dependency declarations** at the top of each spec. Enables sub-agent delegation.
+3. **Separate "what to build" from reference data.** Column mappings, validation rules in structured format.
+4. **Test specs inline with implementation tasks.** Sub-agent gets everything in one place.
+5. **Interface-first design** with cross-references. Agent only loads what it needs.
+
+### Builder Process
+
+1. **"Taste the soup" — self-test before declaring done.** Improved from round 1 but still not fully internalized (missed RunningApp wiring).
+2. **Sub-agent delegation with dependency graph** is the key innovation. Prevents context exhaustion.
+3. **Commit per task** provides rollback points and makes UAT easier.
+4. **Explicit "wire real implementation" mandates** needed in specs that define mock/real boundaries.
+
+### UAT Process
+
+1. **No BLOCKED verdicts, ever.** If a feature is missing, it's a FAIL.
+2. **Read specs BEFORE testing.** UAT must know what was specified before judging what was built.
+3. **Cite specs in FAIL reports.** Evidence-based, not opinion-based.
+4. **Build automated test harness FIRST.** 111+ automated tests saved enormous context window.
+5. **Add novel failures to harness as regression tests.** Metasploit model.
+6. **Mock mode is not an excuse.** Per spec 11, mock replaces external deps only.
+
+### Driver Operations
+
+1. **Signal isolation** (SIGTERM, SIGUSR1, SIGUSR2, SIGHUP) — child signals must not kill the driver.
+2. **No Setpgid** — claude needs TTY access for its UI.
+3. **Done-file is the authority**, not exit codes. Retry if no done file.
+4. **Verify git clean + pushed** before terminating a session.
+5. **JSONL logging + resume** enables crash recovery across driver restarts.
 
 ## Evaluation Loop
 
