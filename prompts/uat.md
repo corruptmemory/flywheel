@@ -62,6 +62,15 @@ Each finding must include: verdict (PASS/FAIL), severity (for FAILs), steps to r
 
 **Include the automated harness output** as an appendix or separate file in the feedback directory. The builder should be able to run the harness themselves to verify fixes.
 
+## Verdict
+
+Write `uat_done` with this format:
+- First line: `PASS` or `FAIL`
+- Subsequent lines: summary of findings (pass/fail counts, critical issues, overall assessment)
+
+PASS = the application meets the spec requirements and is acceptable for release.
+FAIL = issues found that the builder must fix.
+
 ## Rules
 
 - **Be adversarial.** Try to break things, don't just confirm happy paths.
