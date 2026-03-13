@@ -85,8 +85,11 @@ type RoundLog struct {
 
 func main() {
 	// Ignore signals that child claude processes may attract.
-	// Without this, signals sent to the child's process group can kill the driver.
-	signal.Ignore(syscall.SIGUSR1, syscall.SIGUSR2, syscall.SIGHUP)
+	// Since we share a process group with the child (Setpgid breaks TTY access),
+	// signals targeting claude can kill the driver. SIGTERM is the main culprit —
+	// claude or its sub-agents may trigger it during shutdown.
+	// The user can still Ctrl+C (SIGINT) or kill -9 (SIGKILL) to stop the driver.
+	signal.Ignore(syscall.SIGTERM, syscall.SIGUSR1, syscall.SIGUSR2, syscall.SIGHUP)
 
 	var opts Options
 	parser := flags.NewParser(&opts, flags.Default)
