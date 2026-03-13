@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -22,6 +23,7 @@ type Options struct {
 	SkipPermissions bool          `long:"skip-permissions" description:"Pass --permission-mode bypassPermissions to claude (required for lights-out)"`
 	Model           string        `long:"model" description:"Model to use for claude sessions (e.g. sonnet, opus)"`
 	LogFile         string        `short:"l" long:"log-file" default:"flywheel-runs.jsonl" description:"JSONL file for timing logs"`
+	Start           string        `long:"start" choice:"build" choice:"fix" choice:"uat" default:"build" description:"Entry point: build (fresh), fix (resume at builder-fix), uat (resume at UAT)"`
 }
 
 const builderSuffix = `
@@ -50,14 +52,15 @@ The session will end automatically once the done file is detected.
 
 // RunLog is the top-level entry written to the JSONL log file after each flywheel execution.
 type RunLog struct {
-	StartTime  time.Time   `json:"start_time"`
-	EndTime    time.Time   `json:"end_time"`
-	Duration   string      `json:"duration"`
-	DurationS  float64     `json:"duration_seconds"`
-	Model      string      `json:"model,omitempty"`
-	MaxRounds  int         `json:"max_rounds"`
-	Outcome    string      `json:"outcome"` // "pass", "fail_max_rounds", "error"
-	Rounds     []RoundLog  `json:"rounds"`
+	StartTime time.Time  `json:"start_time"`
+	EndTime   time.Time  `json:"end_time"`
+	Duration  string     `json:"duration"`
+	DurationS float64    `json:"duration_seconds"`
+	Model     string     `json:"model,omitempty"`
+	MaxRounds int        `json:"max_rounds"`
+	Outcome   string     `json:"outcome"` // "pass", "fail_max_rounds", "error"
+	Resumed   string     `json:"resumed,omitempty"` // "", "fix", "uat"
+	Rounds    []RoundLog `json:"rounds"`
 }
 
 // RoundLog records timing for a single builder→UAT round.
@@ -73,6 +76,7 @@ type RoundLog struct {
 	UATDur        string    `json:"uat_duration"`
 	UATDurS       float64   `json:"uat_duration_seconds"`
 	Verdict       string    `json:"verdict"`
+	LastPhase     string    `json:"last_phase"` // "builder" or "uat"
 }
 
 func main() {
@@ -89,55 +93,85 @@ func main() {
 	opts.UATDir = mustAbs(opts.UATDir)
 	opts.PromptsDir = mustAbs(opts.PromptsDir)
 
+	// Determine starting round and phase
+	startRound := 1
+	startPhase := opts.Start // "build", "fix", or "uat"
+
+	if startPhase == "fix" || startPhase == "uat" {
+		lastRun := readLastRunLog(opts.LogFile)
+		if lastRun == nil {
+			die("--start %s requires a previous run in %s, but none found", startPhase, opts.LogFile)
+		}
+		if len(lastRun.Rounds) == 0 {
+			die("--start %s: last run in %s has no rounds", startPhase, opts.LogFile)
+		}
+		lastRound := lastRun.Rounds[len(lastRun.Rounds)-1]
+		startRound = lastRound.Round
+
+		// If last round completed UAT with FAIL, the fix belongs to the NEXT round
+		if startPhase == "fix" && lastRound.LastPhase == "uat" {
+			startRound = lastRound.Round + 1
+		}
+
+		fmt.Printf("[flywheel] Resuming at %s, round %d (from %s)\n", startPhase, startRound, opts.LogFile)
+	}
+
 	runStart := time.Now()
 	runLog := RunLog{
 		StartTime: runStart,
 		Model:     opts.Model,
 		MaxRounds: opts.MaxRounds,
 	}
+	if startPhase != "build" {
+		runLog.Resumed = startPhase
+	}
 
-	for round := 1; round <= opts.MaxRounds; round++ {
+	for round := startRound; round <= opts.MaxRounds; round++ {
 		fmt.Printf("\n========== Round %d/%d ==========\n\n", round, opts.MaxRounds)
 		roundLog := RoundLog{Round: round}
 
 		// --- Builder phase ---
-		promptFile := "builder-init.md"
-		if round > 1 {
-			promptFile = "builder-fix.md"
-		}
-		roundLog.BuilderPrompt = promptFile
+		skipBuilder := (round == startRound && startPhase == "uat")
 
-		prompt, err := loadPrompt(opts.PromptsDir, promptFile, opts)
-		if err != nil {
-			die("reading prompt: %v", err)
-		}
+		if !skipBuilder {
+			promptFile := "builder-init.md"
+			if round > 1 || startPhase == "fix" {
+				promptFile = "builder-fix.md"
+			}
+			roundLog.BuilderPrompt = promptFile
 
-		builderDone := filepath.Join(opts.BuilderDir, "done")
-		os.Remove(builderDone)
+			prompt, err := loadPrompt(opts.PromptsDir, promptFile, opts)
+			if err != nil {
+				die("reading prompt: %v", err)
+			}
 
-		fmt.Printf("--- Builder [%s] ---\n", promptFile)
-		roundLog.BuilderStart = time.Now()
-		if err := runClaude(opts.BuilderDir, prompt+builderSuffix, builderDone, opts); err != nil {
-			fmt.Fprintf(os.Stderr, "builder exited: %v\n", err)
-		}
-		roundLog.BuilderEnd = time.Now()
-		roundLog.BuilderDur = roundLog.BuilderEnd.Sub(roundLog.BuilderStart).Round(time.Second).String()
-		roundLog.BuilderDurS = roundLog.BuilderEnd.Sub(roundLog.BuilderStart).Seconds()
+			builderDone := filepath.Join(opts.BuilderDir, "done")
+			os.Remove(builderDone)
 
-		fmt.Printf("\n[flywheel] Builder phase: %s\n", roundLog.BuilderDur)
+			fmt.Printf("--- Builder [%s] ---\n", promptFile)
+			roundLog.BuilderStart = time.Now()
+			if err := runClaude(opts.BuilderDir, prompt+builderSuffix, builderDone, opts); err != nil {
+				fmt.Fprintf(os.Stderr, "builder exited: %v\n", err)
+			}
+			roundLog.BuilderEnd = time.Now()
+			roundLog.BuilderDur = roundLog.BuilderEnd.Sub(roundLog.BuilderStart).Round(time.Second).String()
+			roundLog.BuilderDurS = roundLog.BuilderEnd.Sub(roundLog.BuilderStart).Seconds()
+			roundLog.LastPhase = "builder"
 
-		if _, err := os.Stat(builderDone); os.IsNotExist(err) {
-			runLog.Rounds = append(runLog.Rounds, roundLog)
-			runLog.Outcome = "error"
-			runLog.EndTime = time.Now()
-			runLog.Duration = runLog.EndTime.Sub(runStart).Round(time.Second).String()
-			runLog.DurationS = runLog.EndTime.Sub(runStart).Seconds()
-			writeRunLog(opts.LogFile, runLog)
-			die("builder did not create 'done' file — aborting")
+			fmt.Printf("\n[flywheel] Builder phase: %s\n", roundLog.BuilderDur)
+
+			if _, err := os.Stat(builderDone); os.IsNotExist(err) {
+				runLog.Rounds = append(runLog.Rounds, roundLog)
+				finishRunLog(&runLog, runStart, "error", opts.LogFile)
+				die("builder did not create 'done' file — aborting")
+			}
+		} else {
+			fmt.Println("--- Builder [skipped — resuming at UAT] ---")
+			roundLog.BuilderPrompt = "skipped"
 		}
 
 		// --- UAT phase ---
-		prompt, err = loadPrompt(opts.PromptsDir, "uat.md", opts)
+		prompt, err := loadPrompt(opts.PromptsDir, "uat.md", opts)
 		if err != nil {
 			die("reading prompt: %v", err)
 		}
@@ -153,16 +187,13 @@ func main() {
 		roundLog.UATEnd = time.Now()
 		roundLog.UATDur = roundLog.UATEnd.Sub(roundLog.UATStart).Round(time.Second).String()
 		roundLog.UATDurS = roundLog.UATEnd.Sub(roundLog.UATStart).Seconds()
+		roundLog.LastPhase = "uat"
 
 		fmt.Printf("\n[flywheel] UAT phase: %s\n", roundLog.UATDur)
 
 		if _, err := os.Stat(uatDone); os.IsNotExist(err) {
 			runLog.Rounds = append(runLog.Rounds, roundLog)
-			runLog.Outcome = "error"
-			runLog.EndTime = time.Now()
-			runLog.Duration = runLog.EndTime.Sub(runStart).Round(time.Second).String()
-			runLog.DurationS = runLog.EndTime.Sub(runStart).Seconds()
-			writeRunLog(opts.LogFile, runLog)
+			finishRunLog(&runLog, runStart, "error", opts.LogFile)
 			die("UAT did not create 'done' file — aborting")
 		}
 
@@ -176,30 +207,64 @@ func main() {
 		runLog.Rounds = append(runLog.Rounds, roundLog)
 
 		roundDur := roundLog.UATEnd.Sub(roundLog.BuilderStart).Round(time.Second)
+		if skipBuilder {
+			roundDur = roundLog.UATEnd.Sub(roundLog.UATStart).Round(time.Second)
+		}
 		totalDur := time.Since(runStart).Round(time.Second)
 		fmt.Printf("\n========== UAT verdict: %s (round: %s, total: %s) ==========\n\n", verdict, roundDur, totalDur)
 
 		if strings.EqualFold(verdict, "PASS") {
-			runLog.Outcome = "pass"
-			runLog.EndTime = time.Now()
-			runLog.Duration = runLog.EndTime.Sub(runStart).Round(time.Second).String()
-			runLog.DurationS = runLog.EndTime.Sub(runStart).Seconds()
-			writeRunLog(opts.LogFile, runLog)
+			finishRunLog(&runLog, runStart, "pass", opts.LogFile)
 			fmt.Printf("SUCCESS — UAT passed! Total time: %s\n", runLog.Duration)
 			return
 		}
 
 		if round == opts.MaxRounds {
-			runLog.Outcome = "fail_max_rounds"
-			runLog.EndTime = time.Now()
-			runLog.Duration = runLog.EndTime.Sub(runStart).Round(time.Second).String()
-			runLog.DurationS = runLog.EndTime.Sub(runStart).Seconds()
-			writeRunLog(opts.LogFile, runLog)
+			finishRunLog(&runLog, runStart, "fail_max_rounds", opts.LogFile)
 			die("max rounds (%d) reached without UAT pass — total time: %s", opts.MaxRounds, runLog.Duration)
 		}
 
 		fmt.Printf("UAT failed — starting round %d...\n", round+1)
+
+		// After first iteration, reset startPhase so subsequent rounds run normally
+		startPhase = ""
 	}
+}
+
+func finishRunLog(runLog *RunLog, runStart time.Time, outcome, logFile string) {
+	runLog.Outcome = outcome
+	runLog.EndTime = time.Now()
+	runLog.Duration = runLog.EndTime.Sub(runStart).Round(time.Second).String()
+	runLog.DurationS = runLog.EndTime.Sub(runStart).Seconds()
+	writeRunLog(logFile, *runLog)
+}
+
+func readLastRunLog(path string) *RunLog {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+
+	var last string
+	scanner := bufio.NewScanner(f)
+	// Allow up to 1MB lines (run logs can be large with many rounds)
+	scanner.Buffer(make([]byte, 0, 1024*1024), 1024*1024)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line != "" {
+			last = line
+		}
+	}
+	if last == "" {
+		return nil
+	}
+
+	var entry RunLog
+	if err := json.Unmarshal([]byte(last), &entry); err != nil {
+		return nil
+	}
+	return &entry
 }
 
 func writeRunLog(path string, entry RunLog) {
