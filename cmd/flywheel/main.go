@@ -19,6 +19,7 @@ type Options struct {
 	UATDir          string        `short:"u" long:"uat-dir" required:"true" description:"UAT agent workspace directory"`
 	PromptsDir      string        `short:"p" long:"prompts-dir" default:"./prompts" description:"Directory containing prompt templates"`
 	MaxRounds       int           `short:"m" long:"max-rounds" default:"5" description:"Maximum builder→UAT round trips"`
+	Retries         int           `long:"retries" default:"2" description:"Retries per phase if claude crashes without done file"`
 	Timeout         time.Duration `short:"t" long:"timeout" default:"0" description:"Max wall-clock time per agent run (0 = unlimited)"`
 	SkipPermissions bool          `long:"skip-permissions" description:"Pass --permission-mode bypassPermissions to claude (required for lights-out)"`
 	Model           string        `long:"model" description:"Model to use for claude sessions (e.g. sonnet, opus)"`
@@ -163,25 +164,24 @@ func main() {
 			}
 
 			builderDone := filepath.Join(opts.BuilderDir, "done")
-			os.Remove(builderDone)
-
-			fmt.Printf("--- Builder [%s] ---\n", promptFile)
 			roundLog.BuilderStart = time.Now()
-			if err := runClaude(opts.BuilderDir, prompt+builderSuffix, builderDone, opts); err != nil {
-				fmt.Fprintf(os.Stderr, "builder exited: %v\n", err)
+
+			if !runPhaseWithRetries("Builder", promptFile, opts.BuilderDir, prompt+builderSuffix, builderDone, opts) {
+				roundLog.BuilderEnd = time.Now()
+				roundLog.BuilderDur = roundLog.BuilderEnd.Sub(roundLog.BuilderStart).Round(time.Second).String()
+				roundLog.BuilderDurS = roundLog.BuilderEnd.Sub(roundLog.BuilderStart).Seconds()
+				roundLog.LastPhase = "builder"
+				runLog.Rounds = append(runLog.Rounds, roundLog)
+				finishRunLog(&runLog, runStart, "error", opts.LogFile)
+				die("builder did not create 'done' file after %d attempts — aborting", opts.Retries+1)
 			}
+
 			roundLog.BuilderEnd = time.Now()
 			roundLog.BuilderDur = roundLog.BuilderEnd.Sub(roundLog.BuilderStart).Round(time.Second).String()
 			roundLog.BuilderDurS = roundLog.BuilderEnd.Sub(roundLog.BuilderStart).Seconds()
 			roundLog.LastPhase = "builder"
 
 			fmt.Printf("\n[flywheel] Builder phase: %s\n", roundLog.BuilderDur)
-
-			if _, err := os.Stat(builderDone); os.IsNotExist(err) {
-				runLog.Rounds = append(runLog.Rounds, roundLog)
-				finishRunLog(&runLog, runStart, "error", opts.LogFile)
-				die("builder did not create 'done' file — aborting")
-			}
 		} else {
 			fmt.Println("--- Builder [skipped — resuming at UAT] ---")
 			roundLog.BuilderPrompt = "skipped"
@@ -194,25 +194,24 @@ func main() {
 		}
 
 		uatDone := filepath.Join(opts.UATDir, "done")
-		os.Remove(uatDone)
-
-		fmt.Println("--- UAT ---")
 		roundLog.UATStart = time.Now()
-		if err := runClaude(opts.UATDir, prompt+uatSuffix, uatDone, opts); err != nil {
-			fmt.Fprintf(os.Stderr, "UAT exited: %v\n", err)
+
+		if !runPhaseWithRetries("UAT", "uat.md", opts.UATDir, prompt+uatSuffix, uatDone, opts) {
+			roundLog.UATEnd = time.Now()
+			roundLog.UATDur = roundLog.UATEnd.Sub(roundLog.UATStart).Round(time.Second).String()
+			roundLog.UATDurS = roundLog.UATEnd.Sub(roundLog.UATStart).Seconds()
+			roundLog.LastPhase = "uat"
+			runLog.Rounds = append(runLog.Rounds, roundLog)
+			finishRunLog(&runLog, runStart, "error", opts.LogFile)
+			die("UAT did not create 'done' file after %d attempts — aborting", opts.Retries+1)
 		}
+
 		roundLog.UATEnd = time.Now()
 		roundLog.UATDur = roundLog.UATEnd.Sub(roundLog.UATStart).Round(time.Second).String()
 		roundLog.UATDurS = roundLog.UATEnd.Sub(roundLog.UATStart).Seconds()
 		roundLog.LastPhase = "uat"
 
 		fmt.Printf("\n[flywheel] UAT phase: %s\n", roundLog.UATDur)
-
-		if _, err := os.Stat(uatDone); os.IsNotExist(err) {
-			runLog.Rounds = append(runLog.Rounds, roundLog)
-			finishRunLog(&runLog, runStart, "error", opts.LogFile)
-			die("UAT did not create 'done' file — aborting")
-		}
 
 		raw, err := os.ReadFile(uatDone)
 		if err != nil {
@@ -297,6 +296,28 @@ func writeRunLog(path string, entry RunLog) {
 	if err := enc.Encode(entry); err != nil {
 		fmt.Fprintf(os.Stderr, "warning: could not encode log entry: %v\n", path)
 	}
+}
+
+// runPhaseWithRetries runs a claude session, retrying if it crashes without producing a done file.
+// Returns true if the done file was created, false if all attempts exhausted.
+func runPhaseWithRetries(phase, promptFile, dir, prompt, doneFile string, opts Options) bool {
+	for attempt := 0; attempt <= opts.Retries; attempt++ {
+		os.Remove(doneFile)
+
+		if attempt > 0 {
+			fmt.Printf("\n[flywheel] %s crashed without done file — retry %d/%d\n", phase, attempt, opts.Retries)
+		}
+
+		fmt.Printf("--- %s [%s] ---\n", phase, promptFile)
+		if err := runClaude(dir, prompt, doneFile, opts); err != nil {
+			fmt.Fprintf(os.Stderr, "%s exited: %v\n", phase, err)
+		}
+
+		if _, err := os.Stat(doneFile); err == nil {
+			return true
+		}
+	}
+	return false
 }
 
 func loadPrompt(dir, filename string, opts Options) (string, error) {
