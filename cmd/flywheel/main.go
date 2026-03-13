@@ -228,10 +228,20 @@ func clearInnerLoopDoneFiles(df doneFiles) {
 func prePhaseCleanup(action phaseAction, df doneFiles, opts Options) {
 	switch action.Phase {
 	case PhaseBuild:
-		// When advancing to next spec, clear all inner-loop done files
-		// so the new spec starts with a clean slate.
-		if action.Scenario == ScenarioNextSpec {
+		// Always clear builder_done — a new one will be written.
+		os.Remove(df.Builder)
+		switch action.Scenario {
+		case ScenarioNextSpec:
+			// Advancing to next spec: clear all inner-loop done files.
 			clearInnerLoopDoneFiles(df)
+		case ScenarioFixCodeReview:
+			os.Remove(df.CodeReview)
+		case ScenarioFixSecurityReview:
+			os.Remove(df.SecurityReview)
+		case ScenarioFixDevTest:
+			os.Remove(df.DevTest)
+		case ScenarioFixUAT:
+			os.Remove(df.UAT)
 		}
 	case PhaseCodeReview:
 		clearDir(filepath.Join(opts.BuilderDir, "code-review"))
@@ -362,6 +372,9 @@ func main() {
 	opts.PromptsDir = mustAbs(opts.PromptsDir)
 
 	df := newDoneFiles(opts.BuilderDir, opts.UATDir)
+
+	// Truncate the log file on startup so each run starts clean.
+	os.Truncate(opts.LogFile, 0)
 
 	runStart := time.Now()
 	runLog := RunLog{
