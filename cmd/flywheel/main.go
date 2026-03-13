@@ -99,34 +99,18 @@ When testing is complete:
 The session will end automatically once the done file is detected.
 `
 
-// RunLog is the top-level entry written to the JSONL log file after each flywheel execution.
-type RunLog struct {
-	StartTime time.Time `json:"start_time"`
-	EndTime   time.Time `json:"end_time,omitzero"`
-	Duration  string    `json:"duration,omitempty"`
-	DurationS float64   `json:"duration_seconds,omitempty"`
-	Model     string    `json:"model,omitempty"`
-	Outcome   string    `json:"outcome"` // "pass", "fail_max_rounds", "fail_gate_retries", "error"
-	Specs     []SpecLog `json:"specs"`
-	UAT       *UATLog   `json:"uat,omitempty"`
-}
-
-type SpecLog struct {
-	Spec   string     `json:"spec"`
-	Phases []PhaseLog `json:"phases"`
-}
-
-type UATLog struct {
-	Phases []PhaseLog `json:"phases"`
-}
-
-type PhaseLog struct {
-	Phase     string    `json:"phase"`
+// LogEntry is a single JSONL line. Phase entries have Type "phase"; the final line has Type "summary".
+type LogEntry struct {
+	Type      string    `json:"type"`                // "phase" or "summary"
+	Phase     string    `json:"phase,omitempty"`      // e.g. "build", "code-review"
+	Scenario  string    `json:"scenario,omitempty"`   // e.g. "init", "fix-code-review" (build phases only)
 	Prompt    string    `json:"prompt,omitempty"`
 	Start     time.Time `json:"start"`
 	End       time.Time `json:"end"`
 	DurationS float64   `json:"duration_seconds"`
 	Verdict   string    `json:"verdict,omitempty"`
+	Model     string    `json:"model,omitempty"`      // summary only
+	Outcome   string    `json:"outcome,omitempty"`    // summary only
 }
 
 // Done file types and state derivation
@@ -298,62 +282,41 @@ func loadAgentPrompt(promptsDir string, phase Phase, opts Options) (string, erro
 
 // Logging
 
-func appendPhaseLog(runLog *RunLog, action phaseAction, prompt string, start, end time.Time, verdict string) {
-	entry := PhaseLog{
+func appendLogEntry(logFile string, entry LogEntry) {
+	f, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: could not write log to %s: %v\n", logFile, err)
+		return
+	}
+	defer f.Close()
+	if err := json.NewEncoder(f).Encode(entry); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: could not encode log entry: %v\n", err)
+	}
+}
+
+func logPhase(logFile string, action phaseAction, prompt string, start, end time.Time, verdict string) {
+	appendLogEntry(logFile, LogEntry{
+		Type:      "phase",
 		Phase:     string(action.Phase),
+		Scenario:  string(action.Scenario),
 		Prompt:    prompt,
 		Start:     start,
 		End:       end,
 		DurationS: end.Sub(start).Seconds(),
 		Verdict:   verdict,
-	}
-
-	if action.Phase == PhaseUAT {
-		if runLog.UAT == nil {
-			runLog.UAT = &UATLog{}
-		}
-		runLog.UAT.Phases = append(runLog.UAT.Phases, entry)
-		return
-	}
-
-	if len(runLog.Specs) == 0 {
-		runLog.Specs = append(runLog.Specs, SpecLog{Spec: "current"})
-	}
-	last := &runLog.Specs[len(runLog.Specs)-1]
-
-	if action.Phase == PhaseDevTest && strings.EqualFold(verdict, "PASS") {
-		last.Phases = append(last.Phases, entry)
-		runLog.Specs = append(runLog.Specs, SpecLog{Spec: "current"})
-		return
-	}
-
-	last.Phases = append(last.Phases, entry)
+	})
 }
 
-func finishRunLog(runLog *RunLog, runStart time.Time, outcome, logFile string) {
-	runLog.Outcome = outcome
-	flushRunLog(logFile, runLog, runStart)
-}
-
-// flushRunLog rewrites the log file with the current run state.
-// Called after every phase so timing data survives crashes/kills.
-func flushRunLog(path string, runLog *RunLog, runStart time.Time) {
-	runLog.EndTime = time.Now()
-	runLog.Duration = runLog.EndTime.Sub(runStart).Round(time.Second).String()
-	runLog.DurationS = runLog.EndTime.Sub(runStart).Seconds()
-
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "warning: could not write log to %s: %v\n", path, err)
-		return
-	}
-	defer f.Close()
-
-	enc := json.NewEncoder(f)
-	enc.SetIndent("", "")
-	if err := enc.Encode(runLog); err != nil {
-		fmt.Fprintf(os.Stderr, "warning: could not encode log entry: %v\n", path)
-	}
+func logSummary(logFile string, runStart time.Time, model, outcome string) {
+	now := time.Now()
+	appendLogEntry(logFile, LogEntry{
+		Type:      "summary",
+		Start:     runStart,
+		End:       now,
+		DurationS: now.Sub(runStart).Seconds(),
+		Model:     model,
+		Outcome:   outcome,
+	})
 }
 
 // Main loop
@@ -380,12 +343,6 @@ func main() {
 	os.Truncate(opts.LogFile, 0)
 
 	runStart := time.Now()
-	runLog := RunLog{
-		StartTime: runStart,
-		Model:     opts.Model,
-		Outcome:   "error",
-	}
-
 	gateFailCount := 0
 	iterationCount := 0
 
@@ -393,15 +350,17 @@ func main() {
 		action := determineNextPhase(df, opts.BuilderDir, opts.UATDir)
 
 		if action.Phase == "done" {
-			finishRunLog(&runLog, runStart, "pass", opts.LogFile)
-			fmt.Printf("\nSUCCESS — UAT passed! Total time: %s\n", runLog.Duration)
+			logSummary(opts.LogFile, runStart, opts.Model, "pass")
+			totalDur := time.Since(runStart).Round(time.Second)
+			fmt.Printf("\nSUCCESS — UAT passed! Total time: %s\n", totalDur)
 			return
 		}
 
 		iterationCount++
 		if iterationCount > opts.MaxRounds {
-			finishRunLog(&runLog, runStart, "fail_max_rounds", opts.LogFile)
-			die("max iterations (%d) reached — aborting. Total time: %s", opts.MaxRounds, runLog.Duration)
+			logSummary(opts.LogFile, runStart, opts.Model, "fail_max_rounds")
+			totalDur := time.Since(runStart).Round(time.Second)
+			die("max iterations (%d) reached — aborting. Total time: %s", opts.MaxRounds, totalDur)
 		}
 
 		// Pre-phase cleanup
@@ -425,7 +384,7 @@ func main() {
 			promptLabel = fmt.Sprintf("%s.md", action.Phase)
 		}
 		if err != nil {
-			finishRunLog(&runLog, runStart, "error", opts.LogFile)
+			logSummary(opts.LogFile, runStart, opts.Model, "error")
 			die("loading prompt: %v", err)
 		}
 
@@ -440,7 +399,7 @@ func main() {
 		// Run the phase
 		phaseStart := time.Now()
 		if !runPhaseWithRetries(string(action.Phase), promptLabel, action.WorkDir, prompt, action.DoneFile, opts) {
-			finishRunLog(&runLog, runStart, "error", opts.LogFile)
+			logSummary(opts.LogFile, runStart, opts.Model, "error")
 			die("%s did not create done file after %d attempts — aborting", action.Phase, opts.Retries+1)
 		}
 		phaseEnd := time.Now()
@@ -450,16 +409,15 @@ func main() {
 		verdict := readDoneVerdict(action.DoneFile)
 		fmt.Printf("[flywheel] %s: %s (%s)\n", action.Phase, verdict, phaseDur)
 
-		// Log the phase (flush immediately so data survives kills)
-		appendPhaseLog(&runLog, action, promptLabel, phaseStart, phaseEnd, verdict)
-		flushRunLog(opts.LogFile, &runLog, runStart)
+		// Log the phase immediately (append-only, survives kills)
+		logPhase(opts.LogFile, action, promptLabel, phaseStart, phaseEnd, verdict)
 
 		// Track gate failures for --max-gate-retries
 		if action.Phase != PhaseBuild && action.Phase != PhaseUAT {
 			if strings.EqualFold(verdict, "FAIL") {
 				gateFailCount++
 				if opts.MaxGateRetries > 0 && gateFailCount >= opts.MaxGateRetries {
-					finishRunLog(&runLog, runStart, "fail_gate_retries", opts.LogFile)
+					logSummary(opts.LogFile, runStart, opts.Model, "fail_gate_retries")
 					die("builder failed gate %d times on same spec — aborting", gateFailCount)
 				}
 			}
