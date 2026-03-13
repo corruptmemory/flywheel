@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	flags "github.com/jessevdk/go-flags"
@@ -82,6 +84,10 @@ type RoundLog struct {
 }
 
 func main() {
+	// Ignore signals that child claude processes may attract.
+	// Without this, signals sent to the child's process group can kill the driver.
+	signal.Ignore(syscall.SIGUSR1, syscall.SIGUSR2, syscall.SIGHUP)
+
 	var opts Options
 	parser := flags.NewParser(&opts, flags.Default)
 	if _, err := parser.Parse(); err != nil {
@@ -357,6 +363,8 @@ func runClaude(dir, prompt, doneFile string, opts Options) error {
 	cmd.Dir = dir
 	// Clear CLAUDECODE env var so child claude sessions don't think they're nested
 	cmd.Env = filterEnv(os.Environ(), "CLAUDECODE")
+	// Put child in its own process group so signals to it don't kill the driver
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
