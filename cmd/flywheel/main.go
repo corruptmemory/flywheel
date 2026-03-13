@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -20,24 +19,70 @@ type Options struct {
 	BuilderDir      string        `short:"b" long:"builder-dir" required:"true" description:"Builder agent workspace directory"`
 	UATDir          string        `short:"u" long:"uat-dir" required:"true" description:"UAT agent workspace directory"`
 	PromptsDir      string        `short:"p" long:"prompts-dir" default:"./prompts" description:"Directory containing prompt templates"`
-	MaxRounds       int           `short:"m" long:"max-rounds" default:"5" description:"Maximum builder→UAT round trips"`
+	MaxRounds       int           `short:"m" long:"max-rounds" default:"20" description:"Maximum spec-level iterations"`
+	MaxGateRetries  int           `long:"max-gate-retries" default:"3" description:"Max times builder can fail same gate per spec (0=unlimited)"`
 	Retries         int           `long:"retries" default:"2" description:"Retries per phase if claude crashes without done file"`
 	Timeout         time.Duration `short:"t" long:"timeout" default:"0" description:"Max wall-clock time per agent run (0 = unlimited)"`
 	SkipPermissions bool          `long:"skip-permissions" description:"Pass --permission-mode bypassPermissions to claude (required for lights-out)"`
 	Model           string        `long:"model" description:"Model to use for claude sessions (e.g. sonnet, opus)"`
 	LogFile         string        `short:"l" long:"log-file" default:"flywheel-runs.jsonl" description:"JSONL file for timing logs"`
-	Start           string        `long:"start" choice:"build" choice:"fix" choice:"uat" default:"build" description:"Entry point: build (fresh), fix (builder-fix), uat (skip to UAT)"`
-	Resume          bool          `long:"resume" description:"Read log file to determine start phase and round automatically"`
 }
+
+// Phase constants
+
+type Phase string
+
+const (
+	PhaseBuild          Phase = "build"
+	PhaseCodeReview     Phase = "code-review"
+	PhaseSecurityReview Phase = "security-review"
+	PhaseDevTest        Phase = "dev-test"
+	PhaseUAT            Phase = "uat"
+)
+
+type Scenario string
+
+const (
+	ScenarioInit              Scenario = "init"
+	ScenarioNextSpec          Scenario = "next-spec"
+	ScenarioFixCodeReview     Scenario = "fix-code-review"
+	ScenarioFixSecurityReview Scenario = "fix-security-review"
+	ScenarioFixDevTest        Scenario = "fix-dev-test"
+	ScenarioFixUAT            Scenario = "fix-uat"
+)
 
 const builderSuffix = `
 
 ## Completion Protocol
 
-When you have completed ALL work above — including self-UAT, code review, and security review:
+When you have completed ALL work described above:
 
 1. Commit and push all changes
-2. Run: touch done
+2. Write the builder_done file (see format in builder instructions above)
+
+The session will end automatically once the builder_done file is detected.
+`
+
+const reviewSuffix = `
+
+## Completion Protocol
+
+When your review is complete:
+
+1. Write all findings to the appropriate feedback directory
+2. Write your done file with PASS or FAIL on the first line
+
+The session will end automatically once the done file is detected.
+`
+
+const devTestSuffix = `
+
+## Completion Protocol
+
+When testing is complete:
+
+1. Write all results to dev-test-results/
+2. Write dev_test_done with one of: PASS, FAIL, or UAT READY on the first line
 
 The session will end automatically once the done file is detected.
 `
@@ -48,47 +93,253 @@ const uatSuffix = `
 
 When testing is complete:
 
-- If ALL checklist items pass, run: echo "PASS" > done
-- If ANY checklist item fails, run: echo "FAIL" > done
+- If ALL checklist items pass, run: echo "PASS" > uat_done
+- If ANY checklist item fails, run: echo "FAIL" > uat_done
 
 The session will end automatically once the done file is detected.
 `
 
 // RunLog is the top-level entry written to the JSONL log file after each flywheel execution.
 type RunLog struct {
-	StartTime time.Time  `json:"start_time"`
-	EndTime   time.Time  `json:"end_time"`
-	Duration  string     `json:"duration"`
-	DurationS float64    `json:"duration_seconds"`
-	Model     string     `json:"model,omitempty"`
-	MaxRounds int        `json:"max_rounds"`
-	Outcome   string     `json:"outcome"` // "pass", "fail_max_rounds", "error"
-	Resumed   string     `json:"resumed,omitempty"` // "", "fix", "uat"
-	Rounds    []RoundLog `json:"rounds"`
+	StartTime time.Time `json:"start_time"`
+	EndTime   time.Time `json:"end_time,omitempty"`
+	Duration  string    `json:"duration,omitempty"`
+	DurationS float64   `json:"duration_seconds,omitempty"`
+	Model     string    `json:"model,omitempty"`
+	Outcome   string    `json:"outcome"` // "pass", "fail_max_rounds", "fail_gate_retries", "error"
+	Specs     []SpecLog `json:"specs"`
+	UAT       *UATLog   `json:"uat,omitempty"`
 }
 
-// RoundLog records timing for a single builder→UAT round.
-type RoundLog struct {
-	Round         int       `json:"round"`
-	BuilderStart  time.Time `json:"builder_start"`
-	BuilderEnd    time.Time `json:"builder_end"`
-	BuilderDur    string    `json:"builder_duration"`
-	BuilderDurS   float64   `json:"builder_duration_seconds"`
-	BuilderPrompt string    `json:"builder_prompt"`
-	UATStart      time.Time `json:"uat_start"`
-	UATEnd        time.Time `json:"uat_end"`
-	UATDur        string    `json:"uat_duration"`
-	UATDurS       float64   `json:"uat_duration_seconds"`
-	Verdict       string    `json:"verdict"`
-	LastPhase     string    `json:"last_phase"` // "builder" or "uat"
+type SpecLog struct {
+	Spec   string     `json:"spec"`
+	Phases []PhaseLog `json:"phases"`
 }
+
+type UATLog struct {
+	Phases []PhaseLog `json:"phases"`
+}
+
+type PhaseLog struct {
+	Phase     string    `json:"phase"`
+	Prompt    string    `json:"prompt,omitempty"`
+	Start     time.Time `json:"start"`
+	End       time.Time `json:"end"`
+	DurationS float64   `json:"duration_seconds"`
+	Verdict   string    `json:"verdict,omitempty"`
+}
+
+// Done file types and state derivation
+
+type doneFiles struct {
+	Builder        string
+	CodeReview     string
+	SecurityReview string
+	DevTest        string
+	UAT            string
+}
+
+func newDoneFiles(builderDir, uatDir string) doneFiles {
+	return doneFiles{
+		Builder:        filepath.Join(builderDir, "builder_done"),
+		CodeReview:     filepath.Join(builderDir, "code_review_done"),
+		SecurityReview: filepath.Join(builderDir, "security_review_done"),
+		DevTest:        filepath.Join(builderDir, "dev_test_done"),
+		UAT:            filepath.Join(uatDir, "uat_done"),
+	}
+}
+
+func readDoneVerdict(path string) string {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	line := strings.SplitN(strings.TrimSpace(string(data)), "\n", 2)[0]
+	return strings.TrimSpace(line)
+}
+
+type phaseAction struct {
+	Phase    Phase
+	Scenario Scenario
+	DoneFile string
+	WorkDir  string
+}
+
+func determineNextPhase(df doneFiles, builderDir, uatDir string) phaseAction {
+	if v := readDoneVerdict(df.UAT); v != "" {
+		if strings.EqualFold(v, "PASS") {
+			return phaseAction{Phase: "done"}
+		}
+		return phaseAction{Phase: PhaseBuild, Scenario: ScenarioFixUAT, DoneFile: df.Builder, WorkDir: builderDir}
+	}
+
+	if v := readDoneVerdict(df.DevTest); v != "" {
+		switch {
+		case strings.EqualFold(v, "UAT READY"):
+			return phaseAction{Phase: PhaseUAT, DoneFile: df.UAT, WorkDir: uatDir}
+		case strings.EqualFold(v, "PASS"):
+			return phaseAction{Phase: PhaseBuild, Scenario: ScenarioNextSpec, DoneFile: df.Builder, WorkDir: builderDir}
+		default:
+			return phaseAction{Phase: PhaseBuild, Scenario: ScenarioFixDevTest, DoneFile: df.Builder, WorkDir: builderDir}
+		}
+	}
+
+	if v := readDoneVerdict(df.SecurityReview); v != "" {
+		if strings.EqualFold(v, "PASS") {
+			return phaseAction{Phase: PhaseDevTest, DoneFile: df.DevTest, WorkDir: builderDir}
+		}
+		return phaseAction{Phase: PhaseBuild, Scenario: ScenarioFixSecurityReview, DoneFile: df.Builder, WorkDir: builderDir}
+	}
+
+	if v := readDoneVerdict(df.CodeReview); v != "" {
+		if strings.EqualFold(v, "PASS") {
+			return phaseAction{Phase: PhaseSecurityReview, DoneFile: df.SecurityReview, WorkDir: builderDir}
+		}
+		return phaseAction{Phase: PhaseBuild, Scenario: ScenarioFixCodeReview, DoneFile: df.Builder, WorkDir: builderDir}
+	}
+
+	if v := readDoneVerdict(df.Builder); v != "" {
+		return phaseAction{Phase: PhaseCodeReview, DoneFile: df.CodeReview, WorkDir: builderDir}
+	}
+
+	return phaseAction{Phase: PhaseBuild, Scenario: ScenarioInit, DoneFile: df.Builder, WorkDir: builderDir}
+}
+
+func clearDir(dir string) {
+	os.MkdirAll(dir, 0755)
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	for _, e := range entries {
+		if !e.IsDir() {
+			os.Remove(filepath.Join(dir, e.Name()))
+		}
+	}
+}
+
+func clearInnerLoopDoneFiles(df doneFiles) {
+	os.Remove(df.Builder)
+	os.Remove(df.CodeReview)
+	os.Remove(df.SecurityReview)
+	os.Remove(df.DevTest)
+}
+
+func prePhaseCleanup(action phaseAction, df doneFiles, opts Options) {
+	switch action.Phase {
+	case PhaseCodeReview:
+		clearDir(filepath.Join(opts.BuilderDir, "code-review"))
+	case PhaseSecurityReview:
+		clearDir(filepath.Join(opts.BuilderDir, "security-review"))
+	case PhaseDevTest:
+		clearDir(filepath.Join(opts.BuilderDir, "dev-test-results"))
+	case PhaseUAT:
+		clearDir(filepath.Join(opts.BuilderDir, "uat-feedback"))
+	}
+}
+
+// Prompt loading
+
+func loadPrompt(dir, filename string, opts Options) (string, error) {
+	data, err := os.ReadFile(filepath.Join(dir, filename))
+	if err != nil {
+		return "", fmt.Errorf("reading %s: %w", filename, err)
+	}
+	s := string(data)
+	s = strings.ReplaceAll(s, "{{BUILDER_DIR}}", opts.BuilderDir)
+	s = strings.ReplaceAll(s, "{{UAT_DIR}}", opts.UATDir)
+	return s, nil
+}
+
+func loadBuilderPrompt(promptsDir string, scenario Scenario, opts Options) (string, error) {
+	scenarioFile := fmt.Sprintf("scenario-%s.md", scenario)
+	scenarioText, err := loadPrompt(promptsDir, scenarioFile, opts)
+	if err != nil {
+		return "", err
+	}
+	baseText, err := loadPrompt(promptsDir, "builder-base.md", opts)
+	if err != nil {
+		return "", err
+	}
+	return scenarioText + "\n\n" + baseText + builderSuffix, nil
+}
+
+func loadAgentPrompt(promptsDir string, phase Phase, opts Options) (string, error) {
+	promptFile := fmt.Sprintf("%s.md", phase)
+	text, err := loadPrompt(promptsDir, promptFile, opts)
+	if err != nil {
+		return "", err
+	}
+	switch phase {
+	case PhaseDevTest:
+		return text + devTestSuffix, nil
+	case PhaseUAT:
+		return text + uatSuffix, nil
+	default:
+		return text + reviewSuffix, nil
+	}
+}
+
+// Logging
+
+func appendPhaseLog(runLog *RunLog, action phaseAction, prompt string, start, end time.Time, verdict string) {
+	entry := PhaseLog{
+		Phase:     string(action.Phase),
+		Prompt:    prompt,
+		Start:     start,
+		End:       end,
+		DurationS: end.Sub(start).Seconds(),
+		Verdict:   verdict,
+	}
+
+	if action.Phase == PhaseUAT {
+		if runLog.UAT == nil {
+			runLog.UAT = &UATLog{}
+		}
+		runLog.UAT.Phases = append(runLog.UAT.Phases, entry)
+		return
+	}
+
+	if len(runLog.Specs) == 0 {
+		runLog.Specs = append(runLog.Specs, SpecLog{Spec: "current"})
+	}
+	last := &runLog.Specs[len(runLog.Specs)-1]
+
+	if action.Phase == PhaseDevTest && strings.EqualFold(verdict, "PASS") {
+		last.Phases = append(last.Phases, entry)
+		runLog.Specs = append(runLog.Specs, SpecLog{Spec: "current"})
+		return
+	}
+
+	last.Phases = append(last.Phases, entry)
+}
+
+func finishRunLog(runLog *RunLog, runStart time.Time, outcome, logFile string) {
+	runLog.Outcome = outcome
+	runLog.EndTime = time.Now()
+	runLog.Duration = runLog.EndTime.Sub(runStart).Round(time.Second).String()
+	runLog.DurationS = runLog.EndTime.Sub(runStart).Seconds()
+	writeRunLog(logFile, *runLog)
+}
+
+func writeRunLog(path string, entry RunLog) {
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: could not write log to %s: %v\n", path, err)
+		return
+	}
+	defer f.Close()
+
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "")
+	if err := enc.Encode(entry); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: could not encode log entry: %v\n", path)
+	}
+}
+
+// Main loop
 
 func main() {
-	// Ignore signals that child claude processes may attract.
-	// Since we share a process group with the child (Setpgid breaks TTY access),
-	// signals targeting claude can kill the driver. SIGTERM is the main culprit —
-	// claude or its sub-agents may trigger it during shutdown.
-	// The user can still Ctrl+C (SIGINT) or kill -9 (SIGKILL) to stop the driver.
 	signal.Ignore(syscall.SIGTERM, syscall.SIGUSR1, syscall.SIGUSR2, syscall.SIGHUP)
 
 	var opts Options
@@ -104,206 +355,103 @@ func main() {
 	opts.UATDir = mustAbs(opts.UATDir)
 	opts.PromptsDir = mustAbs(opts.PromptsDir)
 
-	// Determine starting round and phase
-	startRound := 1
-	startPhase := opts.Start // "build", "fix", or "uat"
-
-	if opts.Resume {
-		lastRun := readLastRunLog(opts.LogFile)
-		if lastRun == nil {
-			die("--resume: no previous run found in %s", opts.LogFile)
-		}
-		if len(lastRun.Rounds) == 0 {
-			die("--resume: last run in %s has no rounds", opts.LogFile)
-		}
-		lastRound := lastRun.Rounds[len(lastRun.Rounds)-1]
-
-		switch lastRound.LastPhase {
-		case "builder":
-			// Builder finished, UAT never ran
-			startPhase = "uat"
-			startRound = lastRound.Round
-		case "uat":
-			if strings.EqualFold(lastRound.Verdict, "FAIL") {
-				// UAT failed — next step is builder-fix on next round
-				startPhase = "fix"
-				startRound = lastRound.Round + 1
-			} else {
-				// UAT passed — nothing to resume
-				fmt.Println("[flywheel] Last run passed — nothing to resume.")
-				return
-			}
-		default:
-			die("--resume: last round has unknown phase %q", lastRound.LastPhase)
-		}
-
-		fmt.Printf("[flywheel] Resuming at %s, round %d (from %s)\n", startPhase, startRound, opts.LogFile)
-	} else if startPhase != "build" {
-		// --start fix or --start uat without --resume: stateless, start at round 1
-		fmt.Printf("[flywheel] Starting at %s phase, round %d\n", startPhase, startRound)
-	}
+	df := newDoneFiles(opts.BuilderDir, opts.UATDir)
 
 	runStart := time.Now()
 	runLog := RunLog{
 		StartTime: runStart,
 		Model:     opts.Model,
-		MaxRounds: opts.MaxRounds,
-	}
-	if startPhase != "build" {
-		runLog.Resumed = startPhase
+		Outcome:   "error",
 	}
 
-	for round := startRound; round <= opts.MaxRounds; round++ {
-		fmt.Printf("\n========== Round %d/%d ==========\n\n", round, opts.MaxRounds)
-		roundLog := RoundLog{Round: round}
+	gateFailCount := 0
+	iterationCount := 0
 
-		// --- Builder phase ---
-		skipBuilder := (round == startRound && startPhase == "uat")
+	for {
+		action := determineNextPhase(df, opts.BuilderDir, opts.UATDir)
 
-		if !skipBuilder {
-			promptFile := "builder-init.md"
-			if round > 1 || startPhase == "fix" {
-				promptFile = "builder-fix.md"
-			}
-			roundLog.BuilderPrompt = promptFile
-
-			prompt, err := loadPrompt(opts.PromptsDir, promptFile, opts)
-			if err != nil {
-				die("reading prompt: %v", err)
-			}
-
-			builderDone := filepath.Join(opts.BuilderDir, "done")
-			roundLog.BuilderStart = time.Now()
-
-			if !runPhaseWithRetries("Builder", promptFile, opts.BuilderDir, prompt+builderSuffix, builderDone, opts) {
-				roundLog.BuilderEnd = time.Now()
-				roundLog.BuilderDur = roundLog.BuilderEnd.Sub(roundLog.BuilderStart).Round(time.Second).String()
-				roundLog.BuilderDurS = roundLog.BuilderEnd.Sub(roundLog.BuilderStart).Seconds()
-				roundLog.LastPhase = "builder"
-				runLog.Rounds = append(runLog.Rounds, roundLog)
-				finishRunLog(&runLog, runStart, "error", opts.LogFile)
-				die("builder did not create 'done' file after %d attempts — aborting", opts.Retries+1)
-			}
-
-			roundLog.BuilderEnd = time.Now()
-			roundLog.BuilderDur = roundLog.BuilderEnd.Sub(roundLog.BuilderStart).Round(time.Second).String()
-			roundLog.BuilderDurS = roundLog.BuilderEnd.Sub(roundLog.BuilderStart).Seconds()
-			roundLog.LastPhase = "builder"
-
-			fmt.Printf("\n[flywheel] Builder phase: %s\n", roundLog.BuilderDur)
-		} else {
-			fmt.Println("--- Builder [skipped — resuming at UAT] ---")
-			roundLog.BuilderPrompt = "skipped"
-		}
-
-		// --- UAT phase ---
-		prompt, err := loadPrompt(opts.PromptsDir, "uat.md", opts)
-		if err != nil {
-			die("reading prompt: %v", err)
-		}
-
-		uatDone := filepath.Join(opts.UATDir, "done")
-		roundLog.UATStart = time.Now()
-
-		if !runPhaseWithRetries("UAT", "uat.md", opts.UATDir, prompt+uatSuffix, uatDone, opts) {
-			roundLog.UATEnd = time.Now()
-			roundLog.UATDur = roundLog.UATEnd.Sub(roundLog.UATStart).Round(time.Second).String()
-			roundLog.UATDurS = roundLog.UATEnd.Sub(roundLog.UATStart).Seconds()
-			roundLog.LastPhase = "uat"
-			runLog.Rounds = append(runLog.Rounds, roundLog)
-			finishRunLog(&runLog, runStart, "error", opts.LogFile)
-			die("UAT did not create 'done' file after %d attempts — aborting", opts.Retries+1)
-		}
-
-		roundLog.UATEnd = time.Now()
-		roundLog.UATDur = roundLog.UATEnd.Sub(roundLog.UATStart).Round(time.Second).String()
-		roundLog.UATDurS = roundLog.UATEnd.Sub(roundLog.UATStart).Seconds()
-		roundLog.LastPhase = "uat"
-
-		fmt.Printf("\n[flywheel] UAT phase: %s\n", roundLog.UATDur)
-
-		raw, err := os.ReadFile(uatDone)
-		if err != nil {
-			die("reading UAT done file: %v", err)
-		}
-
-		verdict := strings.TrimSpace(string(raw))
-		roundLog.Verdict = verdict
-		runLog.Rounds = append(runLog.Rounds, roundLog)
-
-		roundDur := roundLog.UATEnd.Sub(roundLog.BuilderStart).Round(time.Second)
-		if skipBuilder {
-			roundDur = roundLog.UATEnd.Sub(roundLog.UATStart).Round(time.Second)
-		}
-		totalDur := time.Since(runStart).Round(time.Second)
-		fmt.Printf("\n========== UAT verdict: %s (round: %s, total: %s) ==========\n\n", verdict, roundDur, totalDur)
-
-		if strings.EqualFold(verdict, "PASS") {
+		if action.Phase == "done" {
 			finishRunLog(&runLog, runStart, "pass", opts.LogFile)
-			fmt.Printf("SUCCESS — UAT passed! Total time: %s\n", runLog.Duration)
+			fmt.Printf("\nSUCCESS — UAT passed! Total time: %s\n", runLog.Duration)
 			return
 		}
 
-		if round == opts.MaxRounds {
+		iterationCount++
+		if iterationCount > opts.MaxRounds {
 			finishRunLog(&runLog, runStart, "fail_max_rounds", opts.LogFile)
-			die("max rounds (%d) reached without UAT pass — total time: %s", opts.MaxRounds, runLog.Duration)
+			die("max iterations (%d) reached — aborting. Total time: %s", opts.MaxRounds, runLog.Duration)
 		}
 
-		fmt.Printf("UAT failed — starting round %d...\n", round+1)
+		// Pre-phase cleanup
+		os.Remove(action.DoneFile)
+		prePhaseCleanup(action, df, opts)
 
-		// After first iteration, reset startPhase so subsequent rounds run normally
-		startPhase = ""
-	}
-}
+		// Build the prompt
+		var prompt string
+		var promptLabel string
+		var err error
 
-func finishRunLog(runLog *RunLog, runStart time.Time, outcome, logFile string) {
-	runLog.Outcome = outcome
-	runLog.EndTime = time.Now()
-	runLog.Duration = runLog.EndTime.Sub(runStart).Round(time.Second).String()
-	runLog.DurationS = runLog.EndTime.Sub(runStart).Seconds()
-	writeRunLog(logFile, *runLog)
-}
-
-func readLastRunLog(path string) *RunLog {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil
-	}
-	defer f.Close()
-
-	var last string
-	scanner := bufio.NewScanner(f)
-	// Allow up to 1MB lines (run logs can be large with many rounds)
-	scanner.Buffer(make([]byte, 0, 1024*1024), 1024*1024)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line != "" {
-			last = line
+		switch action.Phase {
+		case PhaseBuild:
+			prompt, err = loadBuilderPrompt(opts.PromptsDir, action.Scenario, opts)
+			promptLabel = fmt.Sprintf("scenario-%s.md + builder-base.md", action.Scenario)
+		case PhaseUAT:
+			prompt, err = loadAgentPrompt(opts.PromptsDir, PhaseUAT, opts)
+			promptLabel = "uat.md"
+		default:
+			prompt, err = loadAgentPrompt(opts.PromptsDir, action.Phase, opts)
+			promptLabel = fmt.Sprintf("%s.md", action.Phase)
 		}
-	}
-	if last == "" {
-		return nil
-	}
+		if err != nil {
+			finishRunLog(&runLog, runStart, "error", opts.LogFile)
+			die("loading prompt: %v", err)
+		}
 
-	var entry RunLog
-	if err := json.Unmarshal([]byte(last), &entry); err != nil {
-		return nil
-	}
-	return &entry
-}
+		// Print phase header
+		totalDur := time.Since(runStart).Round(time.Second)
+		if action.Phase == PhaseBuild {
+			fmt.Printf("\n--- Builder [%s] (elapsed: %s) ---\n", action.Scenario, totalDur)
+		} else {
+			fmt.Printf("\n--- %s (elapsed: %s) ---\n", action.Phase, totalDur)
+		}
 
-func writeRunLog(path string, entry RunLog) {
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "warning: could not write log to %s: %v\n", path, err)
-		return
-	}
-	defer f.Close()
+		// Run the phase
+		phaseStart := time.Now()
+		if !runPhaseWithRetries(string(action.Phase), promptLabel, action.WorkDir, prompt, action.DoneFile, opts) {
+			finishRunLog(&runLog, runStart, "error", opts.LogFile)
+			die("%s did not create done file after %d attempts — aborting", action.Phase, opts.Retries+1)
+		}
+		phaseEnd := time.Now()
+		phaseDur := phaseEnd.Sub(phaseStart).Round(time.Second)
 
-	enc := json.NewEncoder(f)
-	enc.SetIndent("", "")
-	if err := enc.Encode(entry); err != nil {
-		fmt.Fprintf(os.Stderr, "warning: could not encode log entry: %v\n", path)
+		// Read verdict
+		verdict := readDoneVerdict(action.DoneFile)
+		fmt.Printf("[flywheel] %s: %s (%s)\n", action.Phase, verdict, phaseDur)
+
+		// Log the phase
+		appendPhaseLog(&runLog, action, promptLabel, phaseStart, phaseEnd, verdict)
+
+		// Track gate failures for --max-gate-retries
+		if action.Phase != PhaseBuild && action.Phase != PhaseUAT {
+			if strings.EqualFold(verdict, "FAIL") {
+				gateFailCount++
+				if opts.MaxGateRetries > 0 && gateFailCount >= opts.MaxGateRetries {
+					finishRunLog(&runLog, runStart, "fail_gate_retries", opts.LogFile)
+					die("builder failed gate %d times on same spec — aborting", gateFailCount)
+				}
+			}
+		}
+
+		// Reset gate counter when dev test passes (spec advances)
+		if action.Phase == PhaseDevTest && strings.EqualFold(verdict, "PASS") {
+			gateFailCount = 0
+			clearInnerLoopDoneFiles(df)
+		}
+
+		// Reset gate counter on UAT READY
+		if action.Phase == PhaseDevTest && strings.EqualFold(verdict, "UAT READY") {
+			gateFailCount = 0
+		}
 	}
 }
 
@@ -327,17 +475,6 @@ func runPhaseWithRetries(phase, promptFile, dir, prompt, doneFile string, opts O
 		}
 	}
 	return false
-}
-
-func loadPrompt(dir, filename string, opts Options) (string, error) {
-	data, err := os.ReadFile(filepath.Join(dir, filename))
-	if err != nil {
-		return "", fmt.Errorf("reading %s: %w", filename, err)
-	}
-	s := string(data)
-	s = strings.ReplaceAll(s, "{{BUILDER_DIR}}", opts.BuilderDir)
-	s = strings.ReplaceAll(s, "{{UAT_DIR}}", opts.UATDir)
-	return s, nil
 }
 
 func runClaude(dir, prompt, doneFile string, opts Options) error {
