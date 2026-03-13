@@ -26,6 +26,7 @@ type Options struct {
 	SkipPermissions bool          `long:"skip-permissions" description:"Pass --permission-mode bypassPermissions to claude (required for lights-out)"`
 	Model           string        `long:"model" description:"Model to use for claude sessions (e.g. sonnet, opus)"`
 	LogFile         string        `short:"l" long:"log-file" default:"flywheel-runs.jsonl" description:"JSONL file for timing logs"`
+	Resume          bool          `long:"resume" description:"Resume from where we left off (skip log truncation)"`
 }
 
 // Phase constants
@@ -339,12 +340,13 @@ func main() {
 
 	df := newDoneFiles(opts.BuilderDir, opts.UATDir)
 
-	// Truncate the log file on startup so each run starts clean.
-	os.Truncate(opts.LogFile, 0)
+	if !opts.Resume {
+		os.Truncate(opts.LogFile, 0)
+	}
 
 	runStart := time.Now()
 	gateFailCount := 0
-	iterationCount := 0
+	specCount := 0
 
 	for {
 		action := determineNextPhase(df, opts.BuilderDir, opts.UATDir)
@@ -356,11 +358,14 @@ func main() {
 			return
 		}
 
-		iterationCount++
-		if iterationCount > opts.MaxRounds {
-			logSummary(opts.LogFile, runStart, opts.Model, "fail_max_rounds")
-			totalDur := time.Since(runStart).Round(time.Second)
-			die("max iterations (%d) reached — aborting. Total time: %s", opts.MaxRounds, totalDur)
+		// Count spec-level rounds (new spec starts), not individual phases
+		if action.Phase == PhaseBuild && (action.Scenario == ScenarioInit || action.Scenario == ScenarioNextSpec) {
+			specCount++
+			if specCount > opts.MaxRounds {
+				logSummary(opts.LogFile, runStart, opts.Model, "fail_max_rounds")
+				totalDur := time.Since(runStart).Round(time.Second)
+				die("max spec rounds (%d) reached — aborting. Total time: %s", opts.MaxRounds, totalDur)
+			}
 		}
 
 		// Pre-phase cleanup
