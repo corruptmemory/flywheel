@@ -30,7 +30,8 @@ When you have completed ALL work above — including self-UAT, code review, and 
 
 1. Commit and push all changes
 2. Run: touch done
-3. Run: /exit
+
+The session will end automatically once the done file is detected.
 `
 
 const uatSuffix = `
@@ -42,7 +43,7 @@ When testing is complete:
 - If ALL checklist items pass, run: echo "PASS" > done
 - If ANY checklist item fails, run: echo "FAIL" > done
 
-Then run /exit to end the session.
+The session will end automatically once the done file is detected.
 `
 
 func main() {
@@ -77,7 +78,7 @@ func main() {
 		os.Remove(builderDone)
 
 		fmt.Printf("--- Builder [%s] ---\n", promptFile)
-		if err := runClaude(opts.BuilderDir, prompt+builderSuffix, opts); err != nil {
+		if err := runClaude(opts.BuilderDir, prompt+builderSuffix, builderDone, opts); err != nil {
 			fmt.Fprintf(os.Stderr, "builder exited: %v\n", err)
 		}
 
@@ -95,7 +96,7 @@ func main() {
 		os.Remove(uatDone)
 
 		fmt.Println("--- UAT ---")
-		if err := runClaude(opts.UATDir, prompt+uatSuffix, opts); err != nil {
+		if err := runClaude(opts.UATDir, prompt+uatSuffix, uatDone, opts); err != nil {
 			fmt.Fprintf(os.Stderr, "UAT exited: %v\n", err)
 		}
 
@@ -135,9 +136,12 @@ func loadPrompt(dir, filename string, opts Options) (string, error) {
 	return s, nil
 }
 
-func runClaude(dir, prompt string, opts Options) error {
+func runClaude(dir, prompt, doneFile string, opts Options) error {
 	ctx, cancel := context.WithTimeout(context.Background(), opts.Timeout)
 	defer cancel()
+
+	// Watch for the done file and cancel context when it appears
+	go watchForDone(ctx, cancel, doneFile)
 
 	args := []string{}
 	if opts.SkipPermissions {
@@ -156,6 +160,23 @@ func runClaude(dir, prompt string, opts Options) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+func watchForDone(ctx context.Context, cancel context.CancelFunc, path string) {
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if _, err := os.Stat(path); err == nil {
+				fmt.Printf("\n[flywheel] done file detected: %s\n", path)
+				cancel()
+				return
+			}
+		}
+	}
 }
 
 func filterEnv(env []string, excludePrefix string) []string {
