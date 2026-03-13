@@ -295,6 +295,22 @@ func appendLogEntry(logFile string, entry LogEntry) {
 	}
 }
 
+// countUATRuns counts how many UAT phase entries exist in the log file (for --resume).
+func countUATRuns(logFile string) int {
+	data, err := os.ReadFile(logFile)
+	if err != nil {
+		return 0
+	}
+	count := 0
+	for _, line := range strings.Split(string(data), "\n") {
+		var entry LogEntry
+		if json.Unmarshal([]byte(line), &entry) == nil && entry.Type == "phase" && entry.Phase == string(PhaseUAT) {
+			count++
+		}
+	}
+	return count
+}
+
 func logPhase(logFile string, action phaseAction, prompt string, start, end time.Time, verdict string) {
 	appendLogEntry(logFile, LogEntry{
 		Type:      "phase",
@@ -346,7 +362,10 @@ func main() {
 
 	runStart := time.Now()
 	gateFailCount := 0
-	specCount := 0
+	uatCount := countUATRuns(opts.LogFile)
+	if uatCount > 0 {
+		fmt.Printf("[flywheel] resuming with %d prior UAT run(s)\n", uatCount)
+	}
 
 	for {
 		action := determineNextPhase(df, opts.BuilderDir, opts.UATDir)
@@ -358,13 +377,13 @@ func main() {
 			return
 		}
 
-		// Count spec-level rounds (new spec starts), not individual phases
-		if action.Phase == PhaseBuild && (action.Scenario == ScenarioInit || action.Scenario == ScenarioNextSpec) {
-			specCount++
-			if specCount > opts.MaxRounds {
+		// Count UAT invocations as rounds (full pipeline cycles)
+		if action.Phase == PhaseUAT {
+			uatCount++
+			if uatCount > opts.MaxRounds {
 				logSummary(opts.LogFile, runStart, opts.Model, "fail_max_rounds")
 				totalDur := time.Since(runStart).Round(time.Second)
-				die("max spec rounds (%d) reached — aborting. Total time: %s", opts.MaxRounds, totalDur)
+				die("max UAT rounds (%d) reached — aborting. Total time: %s", opts.MaxRounds, totalDur)
 			}
 		}
 
