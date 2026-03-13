@@ -516,88 +516,26 @@ func runClaude(dir, prompt, doneFile string, opts Options) error {
 }
 
 func watchForDone(ctx context.Context, cancel context.CancelFunc, doneFile string) {
-	dir := filepath.Dir(doneFile)
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
-	doneDetected := false
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			if !doneDetected {
-				if _, err := os.Stat(doneFile); err == nil {
-					fmt.Printf("\n[flywheel] done file detected: %s\n", doneFile)
-					doneDetected = true
-				}
-				continue
+			if _, err := os.Stat(doneFile); err != nil {
+				continue // done file doesn't exist yet
 			}
-			// Done file exists — wait for git to be clean and pushed
-			if !gitWorktreeClean(dir) {
-				fmt.Println("[flywheel] waiting for clean git worktree...")
-				continue
-			}
-			if !gitRemoteUpToDate(dir) {
-				fmt.Println("[flywheel] waiting for remote to be up to date...")
-				continue
-			}
-			fmt.Println("[flywheel] git clean and pushed — terminating session")
+			// Done file exists — terminate immediately. The builder commits
+			// BEFORE writing progress/builder_done, so code is already pushed.
+			// Waiting longer just gives the model time to ignore "STOP" and
+			// start the next spec.
+			fmt.Printf("\n[flywheel] done file detected: %s — terminating session\n", doneFile)
 			cancel()
 			return
 		}
 	}
-}
-
-// stateFiles are ephemeral files managed by the driver, not code the builder should commit.
-// The builder writes progress/done files after its final commit, so these may be dirty.
-var stateFiles = map[string]bool{
-	"progress":             true,
-	"builder_done":         true,
-	"code_review_done":     true,
-	"security_review_done": true,
-	"dev_test_done":        true,
-	"uat_done":             true,
-}
-
-// gitWorktreeClean returns true if there are no unstaged or uncommitted changes to tracked files,
-// ignoring ephemeral state files (progress, *_done) that the driver manages.
-func gitWorktreeClean(dir string) bool {
-	cmd := exec.Command("git", "status", "--porcelain")
-	cmd.Dir = dir
-	out, err := cmd.Output()
-	if err != nil {
-		return false
-	}
-	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
-		if line == "" {
-			continue
-		}
-		// git status --porcelain format: XY filename
-		file := strings.TrimSpace(line[2:])
-		file = filepath.Base(file) // strip any path prefix
-		if !stateFiles[file] {
-			return false // non-state file is dirty
-		}
-	}
-	return true
-}
-
-// gitRemoteUpToDate returns true if the local branch has no unpushed commits.
-func gitRemoteUpToDate(dir string) bool {
-	// Fetch latest remote state quietly
-	fetch := exec.Command("git", "fetch", "--quiet")
-	fetch.Dir = dir
-	fetch.Run() // best-effort, don't fail if offline
-
-	cmd := exec.Command("git", "rev-list", "@{u}..HEAD")
-	cmd.Dir = dir
-	out, err := cmd.Output()
-	if err != nil {
-		// No upstream configured or other error — treat as not up to date
-		return false
-	}
-	return strings.TrimSpace(string(out)) == ""
 }
 
 func filterEnv(env []string, excludePrefix string) []string {
