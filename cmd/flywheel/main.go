@@ -162,21 +162,69 @@ func runClaude(dir, prompt, doneFile string, opts Options) error {
 	return cmd.Run()
 }
 
-func watchForDone(ctx context.Context, cancel context.CancelFunc, path string) {
+func watchForDone(ctx context.Context, cancel context.CancelFunc, doneFile string) {
+	dir := filepath.Dir(doneFile)
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
+
+	doneDetected := false
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			if _, err := os.Stat(path); err == nil {
-				fmt.Printf("\n[flywheel] done file detected: %s\n", path)
-				cancel()
-				return
+			if !doneDetected {
+				if _, err := os.Stat(doneFile); err == nil {
+					fmt.Printf("\n[flywheel] done file detected: %s\n", doneFile)
+					doneDetected = true
+				}
+				continue
 			}
+			// Done file exists — wait for git to be clean and pushed
+			if !gitWorktreeClean(dir) {
+				fmt.Println("[flywheel] waiting for clean git worktree...")
+				continue
+			}
+			if !gitRemoteUpToDate(dir) {
+				fmt.Println("[flywheel] waiting for remote to be up to date...")
+				continue
+			}
+			fmt.Println("[flywheel] git clean and pushed — terminating session")
+			cancel()
+			return
 		}
 	}
+}
+
+// gitWorktreeClean returns true if there are no unstaged or uncommitted changes to tracked files.
+func gitWorktreeClean(dir string) bool {
+	// Check for unstaged changes
+	diff := exec.Command("git", "diff", "--quiet")
+	diff.Dir = dir
+	if err := diff.Run(); err != nil {
+		return false
+	}
+	// Check for staged but uncommitted changes
+	diffCached := exec.Command("git", "diff", "--cached", "--quiet")
+	diffCached.Dir = dir
+	return diffCached.Run() == nil
+}
+
+// gitRemoteUpToDate returns true if the local branch has no unpushed commits.
+func gitRemoteUpToDate(dir string) bool {
+	// Fetch latest remote state quietly
+	fetch := exec.Command("git", "fetch", "--quiet")
+	fetch.Dir = dir
+	fetch.Run() // best-effort, don't fail if offline
+
+	cmd := exec.Command("git", "rev-list", "@{u}..HEAD")
+	cmd.Dir = dir
+	out, err := cmd.Output()
+	if err != nil {
+		// No upstream configured or other error — treat as not up to date
+		return false
+	}
+	return strings.TrimSpace(string(out)) == ""
 }
 
 func filterEnv(env []string, excludePrefix string) []string {
