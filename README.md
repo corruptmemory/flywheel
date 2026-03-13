@@ -31,6 +31,7 @@ Each round produces a builder workspace and a UAT workspace:
 |-------|---------|-----|--------|---------|-----|--------|
 | 1 | `~/projects/file-uploader` | `~/projects/file-uploader-uat` | 10-12 | B+ | C+ | Complete |
 | 2 | `~/projects/file-uploader-r2` | `~/projects/file-uploader-r2-uat` | 5 | A- | A | Complete |
+| 3 | `~/projects/file-uploader-r3` | `~/projects/file-uploader-r3-uat` | — | — | — | In progress |
 
 ### Round-over-Round Progress
 
@@ -54,39 +55,40 @@ Each builder workspace needs a `README.md`, `CLAUDE.md`, and
 
 ## Orchestration Driver
 
-The `cmd/flywheel/` Go program automates the builder→UAT loop:
+The `cmd/flywheel/` Go program runs a done-file-driven state machine that orchestrates the multi-phase pipeline:
 
 ```bash
 go build -o flywheel ./cmd/flywheel/
+
+# Round 3
 ./flywheel \
-  --builder-dir ~/projects/file-uploader-r2 \
-  --uat-dir ~/projects/file-uploader-r2-uat \
+  --builder-dir ~/projects/file-uploader-r3 \
+  --uat-dir ~/projects/file-uploader-r3-uat \
   --prompts-dir ~/projects/flywheel/prompts \
   --max-rounds 20 \
+  --max-gate-retries 3 \
+  --retries 2 \
   --skip-permissions --model opus
 ```
 
 **Flags:**
 - `--skip-permissions` — passes `--permission-mode bypassPermissions` to claude
 - `--model` — model override (e.g., `sonnet` for smoke tests, `opus` for real builds)
-- `--max-rounds` — safety cap on builder→UAT cycles (default: 5)
+- `--max-rounds` — max spec-level iterations (default: 20)
+- `--max-gate-retries` — max times builder can fail same gate per spec, 0=unlimited (default: 3)
 - `--timeout` — per-session wall-clock limit (default: 0 = unlimited)
-- `--retries` — retry count per phase if claude crashes without done file (default: 2)
+- `--retries` — retries per phase if claude crashes without done file (default: 2)
 - `--log-file` — JSONL timing log (default: `flywheel-runs.jsonl`)
-- `--start [build|fix|uat]` — stateless entry point (default: build)
-- `--resume` — read log file to determine start phase and round automatically
 
-**Loop logic:**
-1. Round 1: load `builder-init.md` → builder builds from scratch
-2. UAT: load `uat.md` → adversarial testing, writes PASS or FAIL to `done`
-3. If FAIL: load `builder-fix.md` → builder reads `uat-feedback/`, fixes issues
-4. Repeat until PASS or max rounds
+**Pipeline (round 3):**
+
+Per-spec quality gates: Build → Code Review → Security Review → Dev Test. All failures route back to Builder. After dev test PASS, advance to next spec. After all specs complete (UAT READY), run UAT. State is derived from done files on disk — always picks up where it left off.
 
 **Resilience features:**
 - Ignores SIGTERM/SIGUSR1/SIGUSR2/SIGHUP (child signals don't kill driver)
 - Retries on crash (done-file is the authority, not exit code)
 - Done-file watcher verifies git is clean and pushed before terminating session
-- JSONL logging enables `--resume` after driver restart
+- Per-phase JSONL logging with timing
 - Filters `CLAUDECODE` env var to prevent nested-session detection
 
 ## Starting Point

@@ -13,14 +13,26 @@ Flywheel is a **meta-project** — it contains no application code. It produces 
 ```
 cmd/flywheel/main.go       — Orchestration driver (Go CLI)
 prompts/                    — Agent prompt templates
-  builder-init.md           — Initial builder prompt (round 1 of each run)
-  builder-fix.md            — Fix prompt (rounds 2+, after UAT failure)
-  uat.md                    — UAT agent prompt (uses {{BUILDER_DIR}}, {{UAT_DIR}} vars)
+  builder-base.md           — Shared builder instructions (all invocations)
+  scenario-init.md          — First build (fresh start)
+  scenario-next-spec.md     — After spec passes all gates
+  scenario-fix-code-review.md    — After code review FAIL
+  scenario-fix-security-review.md — After security review FAIL
+  scenario-fix-dev-test.md  — After dev test FAIL
+  scenario-fix-uat.md       — After UAT FAIL
+  code-review.md            — Code review agent prompt
+  security-review.md        — Security review agent prompt
+  dev-test.md               — Dev test agent prompt
+  uat.md                    — UAT agent prompt
+design-system/              — Durable visual design artifact (copied into builder workspaces)
+  tokens.css                — CSS custom properties (colors, spacing, fonts)
+  patterns.md               — Component patterns (cards, badges, forms, etc.)
+  layout.md                 — Layout rules (breakpoints, grid, page structure)
+  screenshots/              — Visual reference from round 2
 feedback/                   — Post-mortem analysis from previous rounds
-  round1.md                 — User feedback from round 1
-  round1-analysis.md        — Detailed analysis of round 1
-  round2-assessment.md      — Comprehensive round 2 assessment with source comparison
-flywheel-runs.jsonl         — JSONL timing logs (gitignored)
+  round1.md, round1-analysis.md, round2-assessment.md
+  ideas-for-round-3.md      — Round 3 vision (5-phase pipeline)
+docs/plans/                 — Design docs and implementation plans
 ```
 
 ### Output Directories (not in this repo)
@@ -29,39 +41,46 @@ flywheel-runs.jsonl         — JSONL timing logs (gitignored)
 |-------|-------------------|---------------|
 | 1 | `~/projects/file-uploader` | `~/projects/file-uploader-uat` |
 | 2 | `~/projects/file-uploader-r2` | `~/projects/file-uploader-r2-uat` |
+| 3 | `~/projects/file-uploader-r3` | `~/projects/file-uploader-r3-uat` |
 
 ## Flywheel Driver
 
-The `cmd/flywheel/` Go program orchestrates builder→UAT round trips:
+The `cmd/flywheel/` Go program orchestrates the multi-phase pipeline:
 
 ```bash
 go build -o flywheel ./cmd/flywheel/
 
+# Round 3
 ./flywheel \
-  --builder-dir ~/projects/file-uploader-r2 \
-  --uat-dir ~/projects/file-uploader-r2-uat \
+  --builder-dir ~/projects/file-uploader-r3 \
+  --uat-dir ~/projects/file-uploader-r3-uat \
   --prompts-dir ~/projects/flywheel/prompts \
   --max-rounds 20 \
+  --max-gate-retries 3 \
   --skip-permissions --model opus
 ```
 
 **Key flags:**
 - `--skip-permissions` — passes `--permission-mode bypassPermissions` to claude
 - `--model` — model override (e.g., `sonnet` for smoke tests, `opus` for real builds)
-- `--max-rounds` — safety cap on builder→UAT cycles (default: 5)
+- `--max-rounds` — max spec-level iterations (default: 20)
+- `--max-gate-retries` — max times builder can fail same gate per spec, 0=unlimited (default: 3)
 - `--timeout` — per-session wall-clock limit (default: 0 = unlimited)
 - `--retries` — retries per phase if claude crashes without done file (default: 2)
 - `--log-file` — JSONL timing log (default: `flywheel-runs.jsonl`)
-- `--start [build|fix|uat]` — stateless entry point
-- `--resume` — log-driven automatic resume
 
-**Loop logic:**
-1. Round 1: load `builder-init.md` → builder builds from scratch
-2. UAT: load `uat.md` → adversarial testing, writes PASS or FAIL to `done`
-3. If FAIL: load `builder-fix.md` → builder reads `uat-feedback/`, fixes issues
-4. Repeat until PASS or max rounds
+**Pipeline (round 3 — done-file-driven state machine):**
 
-**Resilience:** Ignores SIGTERM/SIGUSR1/SIGUSR2/SIGHUP (child signals don't kill driver), retries on crash, verifies git clean+pushed before terminating, JSONL logging for resume, filters `CLAUDECODE` env var.
+```
+Builder (1 spec) → Code Review → Security Review → Dev Test
+   ↑ FAIL from any gate routes back to Builder
+   Dev Test PASS → Builder (next spec)
+   Dev Test UAT READY → UAT → PASS = DONE
+```
+
+The driver reads done files on disk to determine the next phase. No `--start`/`--resume` needed — always picks up where it left off. Prompt is assembled by concatenating scenario snippet + builder-base.md + completion suffix.
+
+**Resilience:** Ignores SIGTERM/SIGUSR1/SIGUSR2/SIGHUP (child signals don't kill driver), retries on crash, verifies git clean+pushed before terminating, JSONL per-phase logging, filters `CLAUDECODE` env var.
 
 ## Workflow
 
@@ -217,6 +236,26 @@ The UAT agent built genuine test automation in the UAT workspace:
 - `test-harness-extra.sh` — 46 supplementary tests (concurrent uploads, hashing, filtering)
 - `uat-playwright.js` — 530+ lines of browser tests, 25+ screenshots
 - Fully idempotent, builder can re-run to verify fixes
+
+## Round 3 (Current)
+
+**Workspace:** `~/projects/file-uploader-r3` and `~/projects/file-uploader-r3-uat`
+**Architecture:** Multi-phase pipeline with per-spec quality gates
+
+### Key Changes from Round 2
+
+- **5-phase pipeline:** Build → Code Review → Security Review → Dev Test → (next spec or UAT)
+- **Per-spec quality gates:** Every spec must pass all 3 review stages before advancing
+- **Done-file-driven state machine:** Driver derives next phase from done files on disk
+- **Adversarial review agents:** Code review, security review, and dev test are all adversarial judges
+- **Prompt concatenation:** scenario snippet + builder-base.md + completion suffix
+- **Gate retry tracking:** `--max-gate-retries` caps consecutive failures per spec
+- **Design system:** Durable visual artifact extracted from round 2, copied into workspace
+- **Spec refinements:** Specs 10/11 mandate real implementation wiring, specs 12-14 reference design system
+
+### Design Doc
+
+Full architecture: `docs/plans/2026-03-13-round3-multi-phase-pipeline-design.md`
 
 ## Lessons Learned (Cumulative)
 
