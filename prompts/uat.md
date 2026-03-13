@@ -10,13 +10,15 @@ Read the README.md in THIS repo (`{{UAT_DIR}}`) for the full test checklist and 
 
 ## Process
 
-1. Build the application: `cd {{BUILDER_DIR}} && ./build.sh -g -G -b`
-2. Start in mock mode: `./file-uploader --mock -p 8080`
-3. Systematically test EVERY item on the checklist in README.md
-4. For each feature area, read the corresponding build spec first — know what was specified before you test
+1. **Read the build specifications FIRST.** Before you test anything, read specs 10 and 11 (`{{BUILDER_DIR}}/build-specification/10-application-state-machine.md` and `11-mock-mode.md`) to understand what RunningApp should do and what mock mode should replace. Then as you test each area, read its corresponding spec.
+2. Build the application: `cd {{BUILDER_DIR}} && ./build.sh -g -G -b`
+3. Start in mock mode: `./file-uploader --mock -p 8080`
+4. Systematically test EVERY item on the checklist in README.md
 5. Use curl for API/headless testing
 6. Use Playwright for browser/UI testing (browser is at /usr/bin/brave)
 7. Generate test data: `./file-uploader gen-csv --type <type> --rows 500 --seed 42`
+
+**For every feature that doesn't work:** Before writing your verdict, read the relevant spec. Ask yourself: "Was the builder told to build this?" If yes → FAIL with spec citation. Do not rationalize the gap. Do not accept "mock mode limitation" unless the spec explicitly says that feature is disabled in mock mode.
 
 ## Reporting
 
