@@ -492,6 +492,15 @@ func runClaude(dir, prompt, doneFile string, opts Options) error {
 	// Watch for the done file and cancel context when it appears
 	go watchForDone(ctx, cancel, doneFile)
 
+	// Write prompt to a temp file so it doesn't appear in the process argv.
+	// This prevents pgrep/pkill from matching the claude process when agents
+	// search for strings that happen to appear in the prompt (e.g. "file-uploader --mock").
+	promptFile := filepath.Join(dir, ".flywheel-prompt.md")
+	if err := os.WriteFile(promptFile, []byte(prompt), 0600); err != nil {
+		return fmt.Errorf("writing prompt file: %w", err)
+	}
+	defer os.Remove(promptFile)
+
 	args := []string{}
 	if opts.SkipPermissions {
 		args = append(args, "--permission-mode", "bypassPermissions")
@@ -499,7 +508,7 @@ func runClaude(dir, prompt, doneFile string, opts Options) error {
 	if opts.Model != "" {
 		args = append(args, "--model", opts.Model)
 	}
-	args = append(args, prompt)
+	args = append(args, "Read .flywheel-prompt.md and follow ALL instructions in it exactly. Do not summarize or ask questions — just execute.")
 
 	cmd := exec.CommandContext(ctx, "claude", args...)
 	cmd.Dir = dir
