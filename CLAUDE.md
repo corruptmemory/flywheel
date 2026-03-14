@@ -291,6 +291,33 @@ Full architecture: `docs/plans/2026-03-13-round3-multi-phase-pipeline-design.md`
 4. **Verify git clean + pushed** before terminating a session.
 5. **JSONL logging + resume** enables crash recovery across driver restarts.
 
+## Prior Art and Industry Context
+
+Flywheel is one instance of the emerging "software factory" pattern — fully autonomous agent-driven development pipelines. See `docs/software-factory-comparison.md` for a detailed comparison.
+
+### StrongDM Software Factory (https://factory.strongdm.ai/)
+
+StrongDM's published framework independently converged on many of the same patterns:
+- Specs + scenarios drive agent behavior (same as our `build-specification/`)
+- Agents converge without human review (we still have a human evaluation step)
+- "Scenarios" instead of tests to prevent agents gaming narrow assertions
+- "Satisfaction" metrics (probabilistic) instead of boolean PASS/FAIL
+- Digital Twin Universe (DTU) — behavioral clones of third-party APIs for testing at scale
+
+**Key differences:** StrongDM is vague on coordination mechanics. Flywheel has a concrete, debuggable state machine (done-file-driven, deterministic routing). Flywheel also has per-spec adversarial quality gates that prevent bug accumulation.
+
+### Convergent Design Insight
+
+Both approaches (and the broader industry trend) converge on the same insight: individual AI agents are noisy but capable. The engineering challenge is **system design that amplifies signal over noise** — not making individual agents smarter. StrongDM uses scenarios and satisfaction metrics. Flywheel uses adversarial quality gates, fresh contexts per invocation, and mechanical boundaries (done files, immediate kill switches). Both work because the system is reliable even when individual agents are not.
+
+### Ideas for Future Iterations
+
+- **Probabilistic satisfaction metrics** instead of binary PASS/FAIL for UAT
+- **Holdout validation scenarios** stored only in UAT workspace (prevents gaming)
+- **Digital Twin Universe** for third-party API testing at scale
+- **Planning engine** — an agent layer that produces task-sized specs from product descriptions (solves the greenfield spec problem)
+- **Multi-project validation** — run the generic driver on a second, different project
+
 ## Evaluation Loop
 
 1. Automated UAT must pass (feedback goes to builder workspace's `uat-feedback/`)

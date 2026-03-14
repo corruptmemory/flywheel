@@ -91,6 +91,14 @@ Per-spec quality gates: Build → Code Review → Security Review → Dev Test. 
 - Per-phase JSONL logging with timing
 - Filters `CLAUDECODE` env var to prevent nested-session detection
 
+## Prior Art
+
+Flywheel is part of the emerging "software factory" pattern. See `docs/software-factory-comparison.md` for a detailed comparison with StrongDM's Software Factory (https://factory.strongdm.ai/).
+
+Key shared insight: individual AI agents are noisy but capable. The engineering challenge is designing systems that amplify signal over noise — adversarial quality gates, fresh contexts, mechanical boundaries. The system is reliable even when individual agents are not.
+
+Inspired by Nate's Substack (Feb 2026) on the Opus 4.6 inflection point: https://natesnewsletter.substack.com/p/january-is-already-obsolete-my-honest
+
 ## Starting Point
 
 We start by deep investigation of the "idpair-central" project located
