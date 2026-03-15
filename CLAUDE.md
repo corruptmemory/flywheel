@@ -28,6 +28,7 @@ design-system/              — Durable visual design artifact (copied into buil
   tokens.css                — CSS custom properties (colors, spacing, fonts)
   patterns.md               — Component patterns (cards, badges, forms, etc.)
   layout.md                 — Layout rules (breakpoints, grid, page structure)
+docs/meeting-notes/         — Design discussion transcripts
   screenshots/              — Visual reference from round 2
 feedback/                   — Post-mortem analysis from previous rounds
   round1.md, round1-analysis.md, round2-assessment.md
@@ -317,6 +318,35 @@ Both approaches (and the broader industry trend) converge on the same insight: i
 - **Digital Twin Universe** for third-party API testing at scale
 - **Planning engine** — an agent layer that produces task-sized specs from product descriptions (solves the greenfield spec problem)
 - **Multi-project validation** — run the generic driver on a second, different project
+
+## Round 4 (Planned)
+
+**Companion project:** `~/projects/lightweight-containers` — provides OS-level agent isolation via chroot jails with bind mounts. Working prototype with stub agents, stress-tested to 76+ rounds. Will be integrated into or merged with flywheel.
+
+**Full discussion:** `docs/meeting-notes/2026-03-15-round4-direction.md`
+
+### Mechanical Isolation
+
+Replace prompt-based access control ("don't touch X") with OS-level enforcement. Each agent gets a chroot jail with tailored filesystem projections — the builder literally cannot see reviewer tooling, reviewers cannot write source code. Three-layer isolation: chroot (visibility) → git hooks (commit enforcement) → patch filtering (planned).
+
+### Tooling-Driven Agent Model
+
+The fundamental architectural shift: agents are **respondents**, not judges.
+
+1. **Speculative tooling derived from specs** encodes what MUST be true at each pipeline stage
+2. **Flywheel runs the tooling mechanically** and feeds output as agent input — no forgetting, no skipping
+3. **Failures are true until proven otherwise** — the default is that a tooling failure is real
+4. **One escape hatch:** agents may update detection criteria (HOW to prove something), never invariants (WHAT must be true)
+
+This is the invariant/detection split: invariants are derived from specs and are non-negotiable; detection criteria are updatable when the specifics of proving an invariant don't align with reality.
+
+### New Agent: Product Owner
+
+A long-lived concurrent process contactable via file-based request/response protocol. Any pipeline agent can escalate spec questions to the PO without stalling the pipeline.
+
+### Prompt Rework
+
+All agent prompts need significant rework to support the new tooling-driven model. This is a major upcoming workstream.
 
 ## Evaluation Loop
 
