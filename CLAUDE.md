@@ -321,9 +321,12 @@ Both approaches (and the broader industry trend) converge on the same insight: i
 
 ## Round 4 (Planned)
 
-**Companion project:** `~/projects/lightweight-containers` — provides OS-level agent isolation via chroot jails with bind mounts. Working prototype with stub agents, stress-tested to 76+ rounds. Will be integrated into or merged with flywheel.
+**Companion project:** `~/projects/lightweight-containers` — provides OS-level agent isolation via chroot jails with bind mounts. Working prototype with stub agents, stress-tested to 76+ rounds. Packages (`jail/`, `gitops/`, `seqsock/`) will be absorbed into flywheel; prototype driver will be discarded (flywheel's driver is more mature).
 
-**Full discussion:** `docs/meeting-notes/2026-03-15-round4-direction.md`
+**Design discussions:**
+- `docs/meeting-notes/2026-03-15-round4-direction.md` — initial direction
+- `docs/meeting-notes/2026-03-15-round4-mcp-and-enforcement.md` — MCP communication layer and enforcement design
+- `feedback/round-4-ideas.md` — full state machine and role descriptions
 
 ### Mechanical Isolation
 
@@ -340,13 +343,53 @@ The fundamental architectural shift: agents are **respondents**, not judges.
 
 This is the invariant/detection split: invariants are derived from specs and are non-negotiable; detection criteria are updatable when the specifics of proving an invariant don't align with reality.
 
+### MCP Server as Coordination Layer
+
+Each agent communicates with the pipeline exclusively through MCP tools — no direct file manipulation for coordination. The MCP server abstracts PO communication, done files, and check results behind tool calls.
+
+**Per-role tools:**
+- **All agents:** `send_request`, `wait_for_response` (sync), `check_response` (async), `list_my_requests`, `write_done`
+- **PO:** `list_pending_requests`, `read_request`, `send_response`, `create_amendment`, `list_amendments`, `write_done`
+
+**Mechanical enforcement via MCP:**
+- `write_done` refuses if outstanding PO requests exist
+- `write_done` validates status format per phase (UNDERSTAND/DISCUSSION during init; PASS/FAIL during review)
+- Identity baked in — agent can't impersonate another role
+- Spec amendments invisible intra-turn (MCP serves from turn-start snapshot)
+
+**Enforcement boundary:** Mechanical enforcement for coordination (process happened, files exist, format correct, requests answered). Trust trained intent for judgment quality (review thoroughness, check meaningfulness, adversarial posture). Over-enforcing creates Goodhart's Law incentives for agents to game gates rather than do meaningful work.
+
+### Init/Prep Convergence Protocol
+
+Before any code is written, all agents negotiate understanding of the specs:
+
+1. PO starts and stays running. All other agents start simultaneously.
+2. Agents read specs, interact with PO as needed (CLARIFY, CONFLICT/AMBIGUITY, SUGGESTED IMPROVEMENT).
+3. `UNDERSTAND` = no PO interaction needed. `DISCUSSION` = had PO interaction this turn.
+4. Any `DISCUSSION` → restart ALL agents with fresh spec snapshot (including accumulated amendments).
+5. Converges when all agents write `UNDERSTAND` in the same round.
+
+During init/prep, reviewers build **speculative tooling** (`run_checks.sh`) covering the entire spec set.
+
 ### New Agent: Product Owner
 
-A long-lived concurrent process contactable via file-based request/response protocol. Any pipeline agent can escalate spec questions to the PO without stalling the pipeline.
+A long-lived concurrent process contactable via MCP-based request/response protocol. Typed request system:
+- **PLEASE CLARIFY** — request spec clarification
+- **POTENTIAL SPEC CONFLICT/AMBIGUITY** — mutually contradictory or ambiguous specs
+- **SUGGESTED IMPROVEMENT** — opportunity to improve the product for the customer
+
+PO maintains specs via **accumulating amendments** (`NNNN-<spec>-amendment-NNN.md`). Amendments cite files and lines, can amend other amendments, and higher suffix numbers supersede lower ones. PO responses must be self-contained (agents can't see updated specs intra-turn).
 
 ### Prompt Rework
 
 All agent prompts need significant rework to support the new tooling-driven model. This is a major upcoming workstream.
+
+### Implementation Phases
+
+```
+Phase 0 (absorb packages) → Phase 1 (workspace/isolation) → Phase 2 (state machine) → Phase 5 (real agents)
+                                                          ↘ Phase 3 (MCP/PO) → Phase 4 (prompts) ↗
+```
 
 ## Evaluation Loop
 

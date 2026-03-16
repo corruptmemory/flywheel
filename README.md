@@ -91,6 +91,22 @@ Per-spec quality gates: Build → Code Review → Security Review → Dev Test. 
 - Per-phase JSONL logging with timing
 - Filters `CLAUDECODE` env var to prevent nested-session detection
 
+## Round 4 (Planned)
+
+Round 4 is a major architectural evolution. See `feedback/round-4-ideas.md` for the full design and `docs/meeting-notes/2026-03-15-round4-*.md` for detailed discussion notes.
+
+**Key changes:**
+
+- **Mechanical isolation:** Absorb `jail/`, `gitops/`, `seqsock/` packages from [`lightweight-containers`](https://github.com/corruptmemory/lightweight-containers) companion project. Each agent runs in a chroot jail with tailored filesystem projections — OS-level enforcement replaces prompt-based "don't touch X."
+
+- **MCP coordination layer:** Agents communicate with the pipeline exclusively through MCP tools. PO requests, done files, and check results are abstracted behind tool calls. The MCP enforces constraints mechanically (can't finish with outstanding PO requests, phase-appropriate done file format, identity isolation).
+
+- **Init/Prep convergence protocol:** Before any code is built, all agents simultaneously read specs, negotiate with PO, and build speculative tooling. Converges via pessimistic restart: any PO interaction triggers a full restart with accumulated amendments until everyone writes `UNDERSTAND`.
+
+- **Product Owner agent:** Long-lived concurrent process with typed request protocol (CLARIFY, CONFLICT/AMBIGUITY, SUGGESTED IMPROVEMENT). Maintains specs via accumulating amendments.
+
+- **Tooling-driven reviews:** Reviewers build `run_checks.sh` during init/prep. The driver runs it mechanically before each review turn. Agents respond to tooling output rather than independently assessing the codebase.
+
 ## Prior Art
 
 Flywheel is part of the emerging "software factory" pattern. See `docs/software-factory-comparison.md` for a detailed comparison with StrongDM's Software Factory (https://factory.strongdm.ai/).
