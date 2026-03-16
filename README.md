@@ -31,7 +31,7 @@ Each round produces a builder workspace and a UAT workspace:
 |-------|---------|-----|--------|---------|-----|--------|
 | 1 | `~/projects/file-uploader` | `~/projects/file-uploader-uat` | 10-12 | B+ | C+ | Complete |
 | 2 | `~/projects/file-uploader-r2` | `~/projects/file-uploader-r2-uat` | 5 | A- | A | Complete |
-| 3 | `~/projects/file-uploader-r3` | `~/projects/file-uploader-r3-uat` | — | — | — | In progress |
+| 3 | `~/projects/file-uploader-r3` | `~/projects/file-uploader-r3-uat` | 2 | — | — | Complete (post-mortem in progress) |
 
 ### Round-over-Round Progress
 
@@ -97,15 +97,17 @@ Round 4 is a major architectural evolution. See `feedback/round-4-ideas.md` for 
 
 **Key changes:**
 
-- **Mechanical isolation:** Absorb `jail/`, `gitops/`, `seqsock/` packages from [`lightweight-containers`](https://github.com/corruptmemory/lightweight-containers) companion project. Each agent runs in a chroot jail with tailored filesystem projections — OS-level enforcement replaces prompt-based "don't touch X."
+- **Mechanical isolation:** Absorb `broker/`, `mcp/`, `jail/`, `gitops/` packages from [`lightweight-containers`](https://github.com/corruptmemory/lightweight-containers) companion project (stress-tested to 76+ rounds). Each agent runs in a chroot jail with tailored filesystem projections — OS-level enforcement replaces prompt-based "don't touch X." Three-layer isolation: chroot (visibility) → git hooks (commit enforcement) → MCP (coordination enforcement).
 
-- **MCP coordination layer:** Agents communicate with the pipeline exclusively through MCP tools. PO requests, done files, and check results are abstracted behind tool calls. The MCP enforces constraints mechanically (can't finish with outstanding PO requests, phase-appropriate done file format, identity isolation).
+- **MCP coordination layer:** Agents communicate with the pipeline exclusively through MCP tools backed by an in-process actor-based event broker. PO requests, done files, and check results are abstracted behind tool calls. The MCP enforces constraints mechanically (can't finish with outstanding PO requests, phase-appropriate done file format, identity isolation). Push-based events enable sub-second `wait_for_response` without polling.
 
 - **Init/Prep convergence protocol:** Before any code is built, all agents simultaneously read specs, negotiate with PO, and build speculative tooling. Converges via pessimistic restart: any PO interaction triggers a full restart with accumulated amendments until everyone writes `UNDERSTAND`.
 
-- **Product Owner agent:** Long-lived concurrent process with typed request protocol (CLARIFY, CONFLICT/AMBIGUITY, SUGGESTED IMPROVEMENT). Maintains specs via accumulating amendments.
+- **Product Owner agent:** Long-lived concurrent process with typed request protocol (CLARIFY, CONFLICT/AMBIGUITY, SUGGESTED IMPROVEMENT). Maintains specs via accumulating amendments. Communicates with agents exclusively through MCP-backed broker.
 
 - **Tooling-driven reviews:** Reviewers build `run_checks.sh` during init/prep. The driver runs it mechanically before each review turn. Agents respond to tooling output rather than independently assessing the codebase.
+
+- **Git workflow:** Multi-repo with per-role branches, `format-patch`/`am` transplant for clean linearized history, path filtering and squash support. Pre-commit hooks enforce per-role write restrictions (builder blocklist, PO/reviewer allowlists).
 
 ## Prior Art
 

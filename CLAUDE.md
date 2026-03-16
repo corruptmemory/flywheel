@@ -238,10 +238,13 @@ The UAT agent built genuine test automation in the UAT workspace:
 - `uat-playwright.js` — 530+ lines of browser tests, 25+ screenshots
 - Fully idempotent, builder can re-run to verify fixes
 
-## Round 3 (Current)
+## Round 3 Results
 
 **Workspace:** `~/projects/file-uploader-r3` and `~/projects/file-uploader-r3-uat`
+**Verdict:** UAT ACCEPTED after 2 rounds (vs 5 in round 2)
 **Architecture:** Multi-phase pipeline with per-spec quality gates
+**Full observations:** `feedback/round3-observations.md` (post-mortem in progress)
+**Stats:** 112 total phases (40 builds, 27 code reviews, 25 security reviews, 18 dev tests, 2 UAT), ~11 hours, 6 driver launches (8 driver bugs found and fixed)
 
 ### Key Changes from Round 2
 
@@ -321,12 +324,26 @@ Both approaches (and the broader industry trend) converge on the same insight: i
 
 ## Round 4 (Planned)
 
-**Companion project:** `~/projects/lightweight-containers` — provides OS-level agent isolation via chroot jails with bind mounts. Working prototype with stub agents, stress-tested to 76+ rounds. Packages (`jail/`, `gitops/`, `seqsock/`) will be absorbed into flywheel; prototype driver will be discarded (flywheel's driver is more mature).
+**Companion project:** `~/projects/lightweight-containers` — provides OS-level agent isolation via chroot jails with bind mounts. Working prototype with stub agents, stress-tested to 76+ rounds. Packages (`broker/`, `mcp/`, `jail/`, `gitops/`) will be absorbed into flywheel; prototype driver will be discarded (flywheel's driver is more mature). `seqsock/` is deprecated (broker has internal counter for MCP mode).
 
 **Design discussions:**
 - `docs/meeting-notes/2026-03-15-round4-direction.md` — initial direction
 - `docs/meeting-notes/2026-03-15-round4-mcp-and-enforcement.md` — MCP communication layer and enforcement design
 - `feedback/round-4-ideas.md` — full state machine and role descriptions
+
+### Packages to Absorb from lightweight-containers
+
+| Package | Lines | Purpose |
+|---------|-------|---------|
+| `broker/` | ~800 | Actor-based event broker: PO request/response/amendment protocol, push events, `write_done` enforcement, sequential IDs |
+| `mcp/` | ~755 | JSON-RPC MCP server: per-role tool surfaces, calls broker in-process, Unix socket per agent |
+| `jail/` | ~715 | Chroot isolation: `RootJail` (mount syscalls) + `UnshareJail` (user namespaces, no root), conditional mounts for merged-usr |
+| `gitops/` | ~800 | Workspace init, per-role branches, `format-patch`/`am` transplant with path filtering/squash, pre-commit hook enforcement |
+| `internal/chanutil/` | ~48 | Generic actor channel helpers (`SendReceive`, `SendReceiveError` with panic recovery) |
+
+**Not absorbed:** `internal/driver/` (prototype, flywheel's driver is more mature), `cmd/lc/` (test CLI), `stubs/` (shell test harness), `seqsock/` (only for non-MCP mode).
+
+**Key architectural evolution (2026-03-16):** The broker and MCP servers were consolidated from a 7-process architecture (driver + broker + 5 MCP servers communicating over sockets) into a single process. The broker runs as an in-process actor goroutine; MCP servers call it directly via the `broker.Broker` interface. This eliminates all IPC overhead.
 
 ### Mechanical Isolation
 
