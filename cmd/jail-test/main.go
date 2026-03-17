@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -100,6 +101,19 @@ func run(opts Options) error {
 		return fmt.Errorf("copy .claude: %s: %w", string(out), err)
 	}
 
+	// Also copy ~/.claude.json (Claude Code looks for it in $HOME, not inside ~/.claude/)
+	claudeJSON := filepath.Join(currentUser.HomeDir, ".claude.json")
+	claudeJSONCopy := filepath.Join(configCopy, ".claude.json")
+	hasClaudeJSON := false
+	if _, err := os.Stat(claudeJSON); err == nil {
+		hasClaudeJSON = true
+		fmt.Printf("[jail-test] copying %s to %s\n", claudeJSON, claudeJSONCopy)
+		cpCmd2 := exec.Command("cp", "-a", claudeJSON, claudeJSONCopy)
+		if out, err := cpCmd2.CombinedOutput(); err != nil {
+			return fmt.Errorf("copy .claude.json: %s: %w", string(out), err)
+		}
+	}
+
 	// --- Step 2: Write prompt file to workspace ---
 	promptContent := defaultPrompt
 	if opts.Prompt != "" {
@@ -151,6 +165,11 @@ func run(opts Options) error {
 	}
 
 	j := jail.NewUnshareJail(jailRoot)
+	// Drop from root (needed for mount/chroot) to real user before exec'ing claude.
+	// Claude Code refuses --dangerously-skip-permissions when running as root.
+	uid, _ := strconv.Atoi(currentUser.Uid)
+	gid, _ := strconv.Atoi(currentUser.Gid)
+	j.SetDropPrivileges(uid, gid)
 
 	homeInJail := filepath.Join(jailRoot, "home", currentUser.Username)
 	workspaceInJail := filepath.Join(jailRoot, "workspace")
@@ -161,8 +180,14 @@ func run(opts Options) error {
 		jail.HostMounts(jailRoot),
 		// Claude Code runtime (read-only)
 		jail.BindMount("/opt/claude-code", filepath.Join(jailRoot, "opt/claude-code"), true),
-		// Ephemeral ~/.claude copy (read-write)
+		// Ephemeral ~/.claude/ directory (read-write)
 		jail.BindMount(claudeCopyDest, filepath.Join(homeInJail, ".claude"), false),
+	)
+	// Ephemeral ~/.claude.json (read-write, only if it exists on host)
+	if hasClaudeJSON {
+		mounts = append(mounts, jail.BindMount(claudeJSONCopy, filepath.Join(homeInJail, ".claude.json"), false))
+	}
+	mounts = append(mounts,
 		// Workspace (read-write)
 		jail.BindMount(workspace, workspaceInJail, false),
 		// tmpfs for scratch
@@ -179,8 +204,12 @@ func run(opts Options) error {
 		defer j.Teardown()
 	}
 
-	// Create home directory in jail (needed for HOME env var)
+	// Create home directory and touch file targets for bind mounts
 	os.MkdirAll(homeInJail, 0755)
+	if hasClaudeJSON {
+		// Bind-mounting a file requires target to be a file, not a directory
+		os.WriteFile(filepath.Join(homeInJail, ".claude.json"), nil, 0600)
+	}
 
 	// --- Step 6: Generate the jail script ---
 	claudeCmd := "/opt/claude-code/bin/claude"
