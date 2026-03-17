@@ -34,9 +34,11 @@ You are inside a jail test. Complete these steps in order:
 1. Run: ls -la
 2. Create the file hello.txt containing "Hello from jail!"
 3. Run: cat hello.txt
-4. Signal completion by running this exact command:
+4. Run: xeyes &
+   (This tests X11 display forwarding. The user will close it. Wait 5 seconds then continue.)
+5. Signal completion by running this exact command:
    curl --unix-socket /run/mcp/mcp.sock -X POST http://localhost/ -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"write_done","arguments":{"status":"PASS","details":"All steps completed successfully."}}}'
-5. Report the curl output.
+6. Report the curl output.
 
 Do not ask questions. Just execute these steps.
 `
@@ -198,6 +200,13 @@ func run(opts Options) error {
 		// MCP socket directory
 		jail.BindMount(mcpSocketDir, mcpInJail, false),
 	)
+	// X11 socket for GUI apps (Playwright, xeyes, etc.)
+	x11Socket := "/tmp/.X11-unix"
+	if _, err := os.Stat(x11Socket); err == nil {
+		mounts = append(mounts,
+			jail.BindMount(x11Socket, filepath.Join(jailRoot, "tmp/.X11-unix"), false),
+		)
+	}
 
 	fmt.Printf("[jail-test] setting up jail at %s (%d mounts)\n", jailRoot, len(mounts))
 	if err := j.Setup(mounts); err != nil {
@@ -235,8 +244,9 @@ func run(opts Options) error {
 	// This runs as the tmux pane's direct process (not send-keys into a shell).
 	// Gives claude direct PTY ownership — critical for TUI rendering.
 	unshareFlags := j.UnshareArgs()
-	fullCmd := fmt.Sprintf("HOME=/home/%s TERM=xterm-256color DISABLE_AUTOUPDATER=1 unshare %s -- bash %s",
+	fullCmd := fmt.Sprintf("HOME=/home/%s TERM=xterm-256color DISPLAY=%s DISABLE_AUTOUPDATER=1 unshare %s -- bash %s",
 		currentUser.Username,
+		os.Getenv("DISPLAY"),
 		strings.Join(unshareFlags, " "),
 		scriptPath,
 	)
