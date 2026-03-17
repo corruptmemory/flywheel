@@ -1,2 +1,3 @@
-/flywheel
-flywheel-runs.jsonl
+flywheel
+tmp/
+*.test

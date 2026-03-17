@@ -1,6 +1,6 @@
 module github.com/corruptmemory/flywheel
 
-go 1.24
+go 1.26.1
 
 require github.com/jessevdk/go-flags v1.6.1
 
