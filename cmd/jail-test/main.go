@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -165,11 +164,10 @@ func run(opts Options) error {
 	}
 
 	j := jail.NewUnshareJail(jailRoot)
-	// Drop from root (needed for mount/chroot) to real user before exec'ing claude.
-	// Claude Code refuses --dangerously-skip-permissions when running as root.
-	uid, _ := strconv.Atoi(currentUser.Uid)
-	gid, _ := strconv.Atoi(currentUser.Gid)
-	j.SetDropPrivileges(uid, gid)
+	// NOTE: We stay as namespace root (UID 0, which maps to host UID 1000).
+	// setpriv doesn't work because namespace UID 1000 maps to host UID 100999.
+	// --permission-mode bypassPermissions may not trigger the root check that
+	// --dangerously-skip-permissions does. If it does, we need a different approach.
 
 	homeInJail := filepath.Join(jailRoot, "home", currentUser.Username)
 	workspaceInJail := filepath.Join(jailRoot, "workspace")
