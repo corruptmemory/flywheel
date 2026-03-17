@@ -12,6 +12,7 @@ type Mount struct {
 	Target    string
 	Options   []string
 	ReadOnly  bool
+	FSType    string      // if set, use "mount -t FSType" instead of bind mount
 	Condition func() bool // if non-nil, mount is skipped when false
 }
 
@@ -119,6 +120,15 @@ func createHostSymlinks(root string) error {
 		}
 	}
 	return nil
+}
+
+// TmpfsMount creates a tmpfs mount at the given target path.
+func TmpfsMount(target string) Mount {
+	return Mount{
+		Source: "tmpfs",
+		Target: target,
+		FSType: "tmpfs",
+	}
 }
 
 // BindMount creates a bind mount entry. If readOnly is true, the mount

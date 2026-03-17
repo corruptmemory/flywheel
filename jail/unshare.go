@@ -89,9 +89,13 @@ func (j *UnshareJail) buildScript(name string, args ...string) string {
 			continue
 		}
 		fmt.Fprintf(&sb, "mkdir -p %s\n", shellQuote(m.Target))
-		fmt.Fprintf(&sb, "mount --bind %s %s\n", shellQuote(m.Source), shellQuote(m.Target))
-		if m.ReadOnly {
-			fmt.Fprintf(&sb, "mount -o remount,bind,ro %s\n", shellQuote(m.Target))
+		if m.FSType != "" {
+			fmt.Fprintf(&sb, "mount -t %s %s %s\n", m.FSType, m.Source, shellQuote(m.Target))
+		} else {
+			fmt.Fprintf(&sb, "mount --bind %s %s\n", shellQuote(m.Source), shellQuote(m.Target))
+			if m.ReadOnly {
+				fmt.Fprintf(&sb, "mount -o remount,bind,ro %s\n", shellQuote(m.Target))
+			}
 		}
 	}
 
