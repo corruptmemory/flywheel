@@ -34,6 +34,24 @@ func newTmuxSession(sessionName string) (*tmuxSession, error) {
 	return &tmuxSession{name: name, created: true}, nil
 }
 
+// newTmuxSessionWithCommand creates a tmux session where the pane runs the
+// given command directly (not via send-keys into a shell). The command IS the
+// pane process — no intermediate shell layer. This gives the command direct
+// PTY ownership, which is critical for TUI applications like Claude Code.
+func newTmuxSessionWithCommand(sessionName, command string) (*tmuxSession, error) {
+	name := sessionName
+	if name == "" {
+		name = "jail-test"
+	}
+	exec.Command("tmux", "kill-session", "-t", name).Run()
+	cmd := exec.Command("tmux", "new-session", "-d", "-s", name, "-x", "200", "-y", "50",
+		"bash", "-c", command)
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("create tmux session with command: %w", err)
+	}
+	return &tmuxSession{name: name, created: true}, nil
+}
+
 // sendKeys sends a command string to the session's first pane.
 func (t *tmuxSession) sendKeys(command string) error {
 	cmd := exec.Command("tmux", "send-keys", "-t", t.name, command, "Enter")

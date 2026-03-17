@@ -26,7 +26,17 @@ type Options struct {
 	Timeout     time.Duration `long:"timeout" default:"2m" description:"Max time to wait for agent to finish"`
 }
 
-const defaultPrompt = `Say "Hello from jail!" and nothing else.`
+const defaultPrompt = `# Test Prompt
+
+You are inside a jail test. Complete these steps:
+
+1. Run: ls -la
+2. Create the file hello.txt containing "Hello from jail!"
+3. Run: cat hello.txt
+4. Report what you see.
+
+Do not ask questions. Just execute these steps.
+`
 
 func main() {
 	var opts Options
@@ -206,31 +216,28 @@ func run(opts Options) error {
 	}
 
 	// --- Step 6: Generate the jail script ---
-	// Use bash -c to cd to /workspace before running claude.
-	// The chroot changes root but doesn't set CWD — claude defaults to
-	// the host's CWD which doesn't exist inside the jail.
-	// In --print mode, pass the prompt directly on the command line (no file reading).
-	// Pipe through tee to capture output to a file AND display in tmux.
-	escapedPrompt := strings.ReplaceAll(promptContent, "'", "'\\''")
-	claudeInvocation := fmt.Sprintf(`/opt/claude-code/bin/claude --permission-mode bypassPermissions --print '%s' 2>&1 | tee /workspace/claude-output.txt`, escapedPrompt)
-	script := j.Script("/bin/bash", "-c", fmt.Sprintf("cd /workspace && %s", claudeInvocation))
+	// Interactive mode: claude reads .flywheel-prompt.md via its own tools.
+	claudeInvocation := `/opt/claude-code/bin/claude --permission-mode bypassPermissions "Read .flywheel-prompt.md and follow ALL instructions exactly. Do not summarize or ask questions."`
+	script := j.Script("/bin/bash", "-c", fmt.Sprintf("cd /workspace && exec %s", claudeInvocation))
 	scriptPath := filepath.Join(tempBase, "jail-run.sh")
 	if err := os.WriteFile(scriptPath, []byte(script), 0755); err != nil {
 		return fmt.Errorf("write jail script: %w", err)
 	}
 	fmt.Printf("[jail-test] jail script written to %s\n", scriptPath)
 
-	// Build the tmux command: env vars + unshare [flags] -- bash <script>
+	// Build the full command: env vars + unshare [flags] -- bash <script>
+	// This runs as the tmux pane's direct process (not send-keys into a shell).
+	// Gives claude direct PTY ownership — critical for TUI rendering.
 	unshareFlags := j.UnshareArgs()
-	tmuxCmd := fmt.Sprintf("HOME=/home/%s TERM=xterm-256color DISABLE_AUTOUPDATER=1 unshare %s -- bash %s",
+	fullCmd := fmt.Sprintf("HOME=/home/%s TERM=xterm-256color DISABLE_AUTOUPDATER=1 unshare %s -- bash %s",
 		currentUser.Username,
 		strings.Join(unshareFlags, " "),
 		scriptPath,
 	)
 
-	// --- Step 7: Create tmux session and launch ---
+	// --- Step 7: Create tmux session with command as pane process ---
 	fmt.Println("[jail-test] creating tmux session...")
-	tmux, err := newTmuxSession(opts.TmuxSession)
+	tmux, err := newTmuxSessionWithCommand(opts.TmuxSession, fullCmd)
 	if err != nil {
 		return fmt.Errorf("tmux: %w", err)
 	}
@@ -240,9 +247,6 @@ func run(opts Options) error {
 
 	fmt.Printf("[jail-test] launching claude in tmux session %q\n", tmux.name)
 	fmt.Printf("[jail-test] attach with: tmux attach -t %s\n", tmux.name)
-	if err := tmux.sendKeys(tmuxCmd); err != nil {
-		return fmt.Errorf("tmux send-keys: %w", err)
-	}
 
 	// --- Step 8: Wait for broker event ---
 	fmt.Printf("[jail-test] waiting for write_done event (timeout: %s)...\n", opts.Timeout)
