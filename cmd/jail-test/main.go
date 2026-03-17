@@ -174,6 +174,11 @@ func run(opts Options) error {
 		fmt.Fprintf(os.Stderr, "[jail-test] warning: chmod socket: %v\n", err)
 	}
 	defer mcpServer.Close()
+	go func() {
+		if err := mcpServer.Serve(); err != nil {
+			fmt.Fprintf(os.Stderr, "[jail-test] MCP server error: %v\n", err)
+		}
+	}()
 
 	// --- Step 5: Set up jail ---
 	fmt.Println("[jail-test] checking unshare preflight...")
