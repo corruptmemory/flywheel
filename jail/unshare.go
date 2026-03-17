@@ -166,6 +166,11 @@ func (j *UnshareJail) writeUnshareMounts(sb *strings.Builder, root string) {
 			shellQuote(devPath), dev, shellQuote(devPath))
 	}
 
+	// devpts — needed for PTY access (e.g. Claude Code's TUI)
+	ptsDir := filepath.Join(devDir, "pts")
+	fmt.Fprintf(sb, "mkdir -p %s\n", shellQuote(ptsDir))
+	fmt.Fprintf(sb, "mount --rbind /dev/pts %s\n", shellQuote(ptsDir))
+
 	// dev symlinks (-n prevents dereferencing existing symlinks on re-runs)
 	fmt.Fprintf(sb, "ln -sfn /proc/self/fd %s\n", shellQuote(filepath.Join(devDir, "fd")))
 	fmt.Fprintf(sb, "ln -sfn /proc/self/fd/0 %s\n", shellQuote(filepath.Join(devDir, "stdin")))
