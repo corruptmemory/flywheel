@@ -183,10 +183,6 @@ func run(opts Options) error {
 		// Ephemeral ~/.claude/ directory (read-write)
 		jail.BindMount(claudeCopyDest, filepath.Join(homeInJail, ".claude"), false),
 	)
-	// Ephemeral ~/.claude.json (read-write, only if it exists on host)
-	if hasClaudeJSON {
-		mounts = append(mounts, jail.BindMount(claudeJSONCopy, filepath.Join(homeInJail, ".claude.json"), false))
-	}
 	mounts = append(mounts,
 		// Workspace (read-write)
 		jail.BindMount(workspace, workspaceInJail, false),
@@ -204,11 +200,14 @@ func run(opts Options) error {
 		defer j.Teardown()
 	}
 
-	// Create home directory and touch file targets for bind mounts
+	// Create home directory and copy .claude.json directly (not bind-mounted —
+	// bind-mounting a single file requires special handling that Setup's MkdirAll breaks)
 	os.MkdirAll(homeInJail, 0755)
 	if hasClaudeJSON {
-		// Bind-mounting a file requires target to be a file, not a directory
-		os.WriteFile(filepath.Join(homeInJail, ".claude.json"), nil, 0600)
+		cpJSON := exec.Command("cp", "-a", claudeJSONCopy, filepath.Join(homeInJail, ".claude.json"))
+		if out, err := cpJSON.CombinedOutput(); err != nil {
+			return fmt.Errorf("copy .claude.json to jail: %s: %w", string(out), err)
+		}
 	}
 
 	// --- Step 6: Generate the jail script ---
