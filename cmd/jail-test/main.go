@@ -201,8 +201,11 @@ func run(opts Options) error {
 	// Use bash -c to cd to /workspace before running claude.
 	// The chroot changes root but doesn't set CWD — claude defaults to
 	// the host's CWD which doesn't exist inside the jail.
-	claudeInvocation := `/opt/claude-code/bin/claude --permission-mode bypassPermissions --print "Read .flywheel-prompt.md and follow ALL instructions exactly. Do not summarize or ask questions."`
-	script := j.Script("/bin/bash", "-c", fmt.Sprintf("cd /workspace && exec %s", claudeInvocation))
+	// In --print mode, pass the prompt directly on the command line (no file reading).
+	// Pipe through tee to capture output to a file AND display in tmux.
+	escapedPrompt := strings.ReplaceAll(promptContent, "'", "'\\''")
+	claudeInvocation := fmt.Sprintf(`/opt/claude-code/bin/claude --permission-mode bypassPermissions --print '%s' 2>&1 | tee /workspace/claude-output.txt`, escapedPrompt)
+	script := j.Script("/bin/bash", "-c", fmt.Sprintf("cd /workspace && %s", claudeInvocation))
 	scriptPath := filepath.Join(tempBase, "jail-run.sh")
 	if err := os.WriteFile(scriptPath, []byte(script), 0755); err != nil {
 		return fmt.Errorf("write jail script: %w", err)
