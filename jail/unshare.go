@@ -1,0 +1,171 @@
+package jail
+
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+)
+
+// UnshareJail manages a chroot environment using unprivileged user namespaces.
+// No root privileges required. Mounts are deferred to Command() time and
+// live inside the namespace — they vanish when the process exits.
+type UnshareJail struct {
+	root   string
+	mounts []Mount
+}
+
+// NewUnshareJail creates a new UnshareJail rooted at the given directory.
+// Call CheckUnsharePreflight() before using this to verify system support.
+func NewUnshareJail(root string) *UnshareJail {
+	return &UnshareJail{root: root}
+}
+
+// Root returns the jail's root directory path.
+func (j *UnshareJail) Root() string {
+	return j.root
+}
+
+// Setup records the mount table and creates the root directory structure.
+// Actual mounts are deferred to Command() time (they run inside the namespace).
+func (j *UnshareJail) Setup(mounts []Mount) error {
+	if err := os.MkdirAll(j.root, 0755); err != nil {
+		return fmt.Errorf("create jail root: %w", err)
+	}
+
+	j.mounts = make([]Mount, len(mounts))
+	copy(j.mounts, mounts)
+
+	// Pre-create target directories for bind mounts so files can be
+	// copied into the jail root before Command() is called (e.g. stubs).
+	for _, m := range mounts {
+		if m.Condition != nil && !m.Condition() {
+			continue
+		}
+		if err := os.MkdirAll(m.Target, 0755); err != nil {
+			return fmt.Errorf("mkdir %s: %w", m.Target, err)
+		}
+	}
+
+	return nil
+}
+
+// Command returns an *exec.Cmd that creates a user namespace, performs all
+// mounts inside it, then chroots and runs the given command.
+func (j *UnshareJail) Command(name string, args ...string) *exec.Cmd {
+	script := j.buildScript(name, args...)
+
+	return exec.Command("unshare",
+		"--fork", "--pid", "--mount",
+		"--map-auto", "--map-root-user",
+		"--setuid", "0", "--setgid", "0",
+		"--", "bash", "-c", script,
+	)
+}
+
+// Teardown is a no-op for UnshareJail. Mounts live inside the namespace
+// and are cleaned up when the unshare process exits.
+func (j *UnshareJail) Teardown() error {
+	return nil
+}
+
+// buildScript generates a bash script that sets up mounts and chroots.
+func (j *UnshareJail) buildScript(name string, args ...string) string {
+	var sb strings.Builder
+	root := j.root
+
+	sb.WriteString("set -e\n")
+
+	// Self-bind the root to make it a mountpoint (arch-chroot pattern).
+	fmt.Fprintf(&sb, "mount --bind %s %s\n", shellQuote(root), shellQuote(root))
+
+	// Base mounts: unshare-style (lighter than root-mode).
+	j.writeUnshareMounts(&sb, root)
+
+	// Agent-specific bind mounts recorded from Setup().
+	for _, m := range j.mounts {
+		if m.Condition != nil && !m.Condition() {
+			continue
+		}
+		fmt.Fprintf(&sb, "mkdir -p %s\n", shellQuote(m.Target))
+		fmt.Fprintf(&sb, "mount --bind %s %s\n", shellQuote(m.Source), shellQuote(m.Target))
+		if m.ReadOnly {
+			fmt.Fprintf(&sb, "mount -o remount,bind,ro %s\n", shellQuote(m.Target))
+		}
+	}
+
+	// Chroot and exec.
+	cmdParts := []string{shellQuote(name)}
+	for _, a := range args {
+		cmdParts = append(cmdParts, shellQuote(a))
+	}
+	fmt.Fprintf(&sb, "exec chroot %s %s\n", shellQuote(root), strings.Join(cmdParts, " "))
+
+	return sb.String()
+}
+
+// writeUnshareMounts writes the base mount commands for the unshare path,
+// mirroring arch-chroot's unshare_setup().
+func (j *UnshareJail) writeUnshareMounts(sb *strings.Builder, root string) {
+	// proc
+	target := filepath.Join(root, "proc")
+	fmt.Fprintf(sb, "mkdir -p %s\n", shellQuote(target))
+	fmt.Fprintf(sb, "mount -t proc proc %s -o nosuid,noexec,nodev\n", shellQuote(target))
+
+	// sys (rbind)
+	target = filepath.Join(root, "sys")
+	fmt.Fprintf(sb, "mkdir -p %s\n", shellQuote(target))
+	fmt.Fprintf(sb, "mount --rbind /sys %s\n", shellQuote(target))
+
+	// dev — bind individual device nodes instead of devtmpfs
+	devDir := filepath.Join(root, "dev")
+	fmt.Fprintf(sb, "mkdir -p %s\n", shellQuote(devDir))
+
+	devices := []string{"full", "null", "random", "tty", "urandom", "zero"}
+	for _, dev := range devices {
+		devPath := filepath.Join(devDir, dev)
+		fmt.Fprintf(sb, "touch %s && mount --bind /dev/%s %s\n",
+			shellQuote(devPath), dev, shellQuote(devPath))
+	}
+
+	// dev symlinks (-n prevents dereferencing existing symlinks on re-runs)
+	fmt.Fprintf(sb, "ln -sfn /proc/self/fd %s\n", shellQuote(filepath.Join(devDir, "fd")))
+	fmt.Fprintf(sb, "ln -sfn /proc/self/fd/0 %s\n", shellQuote(filepath.Join(devDir, "stdin")))
+	fmt.Fprintf(sb, "ln -sfn /proc/self/fd/1 %s\n", shellQuote(filepath.Join(devDir, "stdout")))
+	fmt.Fprintf(sb, "ln -sfn /proc/self/fd/2 %s\n", shellQuote(filepath.Join(devDir, "stderr")))
+
+	// Host toolchain — bind-mount /usr and /etc read-only so binaries
+	// (bash, git, go, etc.) and config are available inside the chroot.
+	for _, dir := range []string{"/usr", "/etc"} {
+		target = filepath.Join(root, dir)
+		fmt.Fprintf(sb, "mkdir -p %s\n", shellQuote(target))
+		fmt.Fprintf(sb, "mount --rbind %s %s\n", dir, shellQuote(target))
+		fmt.Fprintf(sb, "mount -o remount,bind,ro %s\n", shellQuote(target))
+	}
+	// On many distros (Arch, Fedora) /bin, /lib, /lib64, /sbin are symlinks
+	// into /usr. Recreate them using the host's actual symlink target (via
+	// readlink) so this works on Arch (/lib64→usr/lib), Fedora
+	// (/lib64→usr/lib64), etc. On traditional layouts (Debian, Alpine)
+	// they're real directories and get bind-mounted instead.
+	for _, dir := range []string{"/bin", "/lib", "/lib64", "/sbin"} {
+		jailPath := filepath.Join(root, dir)
+		fmt.Fprintf(sb, "if [ -L %s ]; then ln -sfn \"$(readlink %s)\" %s; elif [ -d %s ]; then mkdir -p %s && mount --rbind %s %s && mount -o remount,bind,ro %s; fi\n",
+			dir, dir, shellQuote(jailPath),
+			dir, shellQuote(jailPath), dir, shellQuote(jailPath), shellQuote(jailPath))
+	}
+
+	// run (tmpfs)
+	target = filepath.Join(root, "run")
+	fmt.Fprintf(sb, "mkdir -p %s\n", shellQuote(target))
+	fmt.Fprintf(sb, "mount -t tmpfs run %s -o nosuid,nodev,mode=0755\n", shellQuote(target))
+
+	// Note: we intentionally do NOT mount tmpfs on /tmp. Files (like stub
+	// scripts) are copied into $root/tmp/ before Command() runs, and a tmpfs
+	// mount would shadow them. The namespace provides isolation already.
+}
+
+// shellQuote wraps a string in single quotes, escaping embedded single quotes.
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", "'\\''") + "'"
+}
