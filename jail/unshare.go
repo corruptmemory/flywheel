@@ -64,6 +64,22 @@ func (j *UnshareJail) Command(name string, args ...string) *exec.Cmd {
 	)
 }
 
+// Script returns the bash script that sets up mounts, chroots, and execs the given command.
+// Use with UnshareArgs() to run via tmux or other external process managers.
+func (j *UnshareJail) Script(name string, args ...string) string {
+	return j.buildScript(name, args...)
+}
+
+// UnshareArgs returns the unshare flags (without the trailing bash -c).
+// Combine with Script() written to a file: unshare <flags> -- bash <script-file>
+func (j *UnshareJail) UnshareArgs() []string {
+	return []string{
+		"--fork", "--pid", "--mount",
+		"--map-auto", "--map-root-user",
+		"--setuid", "0", "--setgid", "0",
+	}
+}
+
 // Teardown is a no-op for UnshareJail. Mounts live inside the namespace
 // and are cleaned up when the unshare process exits.
 func (j *UnshareJail) Teardown() error {
