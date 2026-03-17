@@ -221,7 +221,7 @@ func run(opts Options) error {
 
 	// Build the tmux command: env vars + unshare [flags] -- bash <script>
 	unshareFlags := j.UnshareArgs()
-	tmuxCmd := fmt.Sprintf("HOME=/home/%s DISABLE_AUTOUPDATER=1 unshare %s -- bash %s",
+	tmuxCmd := fmt.Sprintf("HOME=/home/%s TERM=xterm-256color DISABLE_AUTOUPDATER=1 unshare %s -- bash %s",
 		currentUser.Username,
 		strings.Join(unshareFlags, " "),
 		scriptPath,
