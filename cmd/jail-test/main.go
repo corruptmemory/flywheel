@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -23,17 +24,19 @@ type Options struct {
 	Role        string        `long:"role" default:"builder" description:"MCP role identity"`
 	Prompt      string        `long:"prompt" description:"Prompt file to place in workspace (default: generates basic test prompt)"`
 	Keep        bool          `long:"keep" description:"Don't tear down jail on exit (for debugging)"`
-	Timeout     time.Duration `long:"timeout" default:"2m" description:"Max time to wait for agent to finish"`
+	Timeout     time.Duration `long:"timeout" default:"5m" description:"Max time to wait for agent to finish"`
 }
 
 const defaultPrompt = `# Test Prompt
 
-You are inside a jail test. Complete these steps:
+You are inside a jail test. Complete these steps in order:
 
 1. Run: ls -la
 2. Create the file hello.txt containing "Hello from jail!"
 3. Run: cat hello.txt
-4. Report what you see.
+4. Signal completion by running this exact command:
+   curl --unix-socket /run/mcp/mcp.sock -X POST http://localhost/ -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"write_done","arguments":{"status":"PASS","details":"All steps completed successfully."}}}'
+5. Report the curl output.
 
 Do not ask questions. Just execute these steps.
 `
@@ -115,6 +118,9 @@ func run(opts Options) error {
 			return fmt.Errorf("copy .claude.json: %s: %w", string(out), err)
 		}
 		os.Chmod(claudeJSONCopy, 0666)
+
+		// Pre-trust /workspace so the trust dialog doesn't block automation
+		injectWorkspaceTrust(claudeJSONCopy)
 	}
 
 	// --- Step 2: Write prompt file to workspace ---
@@ -277,4 +283,31 @@ func run(opts Options) error {
 			return nil
 		}
 	}
+}
+
+// injectWorkspaceTrust adds /workspace to the projects map in .claude.json
+// with hasTrustDialogAccepted: true, so claude doesn't prompt on first access.
+func injectWorkspaceTrust(claudeJSONPath string) {
+	data, err := os.ReadFile(claudeJSONPath)
+	if err != nil {
+		return
+	}
+	var cfg map[string]any
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return
+	}
+	projects, ok := cfg["projects"].(map[string]any)
+	if !ok {
+		projects = make(map[string]any)
+		cfg["projects"] = projects
+	}
+	projects["/workspace"] = map[string]any{
+		"allowedTools":             []any{},
+		"hasTrustDialogAccepted":   true,
+	}
+	out, err := json.Marshal(cfg)
+	if err != nil {
+		return
+	}
+	os.WriteFile(claudeJSONPath, out, 0666)
 }
