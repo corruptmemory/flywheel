@@ -89,6 +89,9 @@ func run(opts Options) error {
 	if out, err := cpCmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("copy .claude: %s: %w", string(out), err)
 	}
+	// Make config copy world-writable — jailed user has a different host UID
+	// due to user namespace mapping (/etc/subuid offset).
+	exec.Command("chmod", "-R", "a+rwX", claudeCopyDest).Run()
 
 	// Also copy ~/.claude.json (Claude Code looks for it in $HOME, not inside ~/.claude/)
 	claudeJSON := filepath.Join(currentUser.HomeDir, ".claude.json")
@@ -101,6 +104,7 @@ func run(opts Options) error {
 		if out, err := cpCmd2.CombinedOutput(); err != nil {
 			return fmt.Errorf("copy .claude.json: %s: %w", string(out), err)
 		}
+		os.Chmod(claudeJSONCopy, 0666)
 	}
 
 	// --- Step 2: Write prompt file to workspace ---
@@ -187,9 +191,13 @@ func run(opts Options) error {
 		defer j.Teardown()
 	}
 
+	// Make workspace world-writable so the jailed user (mapped to a different
+	// host UID via user namespace) can write to it.
+	os.Chmod(workspace, 0777)
+
 	// Create home directory and copy .claude.json directly (not bind-mounted —
 	// bind-mounting a single file requires special handling that Setup's MkdirAll breaks)
-	os.MkdirAll(homeInJail, 0755)
+	os.MkdirAll(homeInJail, 0777)
 	if hasClaudeJSON {
 		cpJSON := exec.Command("cp", "-a", claudeJSONCopy, filepath.Join(homeInJail, ".claude.json"))
 		if out, err := cpJSON.CombinedOutput(); err != nil {
