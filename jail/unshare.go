@@ -12,10 +12,9 @@ import (
 // No root privileges required. Mounts are deferred to Command() time and
 // live inside the namespace — they vanish when the process exits.
 type UnshareJail struct {
-	root    string
-	mounts  []Mount
-	dropUID int // if > 0, drop to this UID before exec (setpriv --reuid)
-	dropGID int // if > 0, drop to this GID before exec (setpriv --regid)
+	root     string
+	mounts   []Mount
+	dropUser string // if set, use runuser -u <user> before exec
 }
 
 // NewUnshareJail creates a new UnshareJail rooted at the given directory.
@@ -24,13 +23,12 @@ func NewUnshareJail(root string) *UnshareJail {
 	return &UnshareJail{root: root}
 }
 
-// SetDropPrivileges configures the jail to drop from root (needed for
-// mount/chroot) to the given UID/GID before exec'ing the command.
-// This is required when the jailed process refuses to run as root
-// (e.g. Claude Code's --dangerously-skip-permissions safety check).
-func (j *UnshareJail) SetDropPrivileges(uid, gid int) {
-	j.dropUID = uid
-	j.dropGID = gid
+// SetDropUser configures the jail to use runuser to switch to the given
+// username before exec'ing the command. This is required when the jailed
+// process refuses to run as root (e.g. Claude Code's permission bypass
+// safety check). The username must exist in /etc/passwd inside the jail.
+func (j *UnshareJail) SetDropUser(username string) {
+	j.dropUser = username
 }
 
 // Root returns the jail's root directory path.
@@ -126,25 +124,17 @@ func (j *UnshareJail) buildScript(name string, args ...string) string {
 		}
 	}
 
-	// Chroot and exec. If drop privileges configured, nest a child user
-	// namespace that maps root (UID 0) to the target UID. This is needed
-	// because the outer namespace uses --map-root-user for mount/chroot,
-	// but the jailed process (e.g. Claude Code) may refuse to run as root.
+	// Chroot and exec. If drop privileges configured, use runuser to
+	// switch identity. runuser doesn't need PAM and works inside user
+	// namespaces — it changes effective UID/GID without requiring nested
+	// namespaces or setpriv UID remapping.
 	cmdParts := []string{shellQuote(name)}
 	for _, a := range args {
 		cmdParts = append(cmdParts, shellQuote(a))
 	}
-	if j.dropUID > 0 || j.dropGID > 0 {
-		unshareParts := []string{"unshare"}
-		if j.dropUID > 0 {
-			unshareParts = append(unshareParts, fmt.Sprintf("--map-user=%d", j.dropUID))
-		}
-		if j.dropGID > 0 {
-			unshareParts = append(unshareParts, fmt.Sprintf("--map-group=%d", j.dropGID))
-		}
-		unshareParts = append(unshareParts, "--")
-		fmt.Fprintf(&sb, "exec chroot %s %s %s\n", shellQuote(root),
-			strings.Join(unshareParts, " "), strings.Join(cmdParts, " "))
+	if j.dropUser != "" {
+		fmt.Fprintf(&sb, "exec chroot %s runuser -u %s -- %s\n", shellQuote(root),
+			j.dropUser, strings.Join(cmdParts, " "))
 	} else {
 		fmt.Fprintf(&sb, "exec chroot %s %s\n", shellQuote(root), strings.Join(cmdParts, " "))
 	}

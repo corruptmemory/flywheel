@@ -164,9 +164,9 @@ func run(opts Options) error {
 	}
 
 	j := jail.NewUnshareJail(jailRoot)
-	// Drop from namespace root (needed for mount/chroot) to UID 1000 via nested
-	// user namespace. Claude Code refuses to run as root (UID 0).
-	j.SetDropPrivileges(1000, 1000)
+	// Drop from namespace root to real user via runuser. Claude Code refuses
+	// to run as root (UID 0). Username must exist in /etc/passwd (bind-mounted).
+	j.SetDropUser(currentUser.Username)
 
 	homeInJail := filepath.Join(jailRoot, "home", currentUser.Username)
 	workspaceInJail := filepath.Join(jailRoot, "workspace")
@@ -208,12 +208,11 @@ func run(opts Options) error {
 	}
 
 	// --- Step 6: Generate the jail script ---
-	claudeCmd := "/opt/claude-code/bin/claude"
-	claudeArgs := []string{
-		"--permission-mode", "bypassPermissions",
-		"Read .flywheel-prompt.md and follow ALL instructions exactly. Do not summarize or ask questions.",
-	}
-	script := j.Script(claudeCmd, claudeArgs...)
+	// Use bash -c to cd to /workspace before running claude.
+	// The chroot changes root but doesn't set CWD — claude defaults to
+	// the host's CWD which doesn't exist inside the jail.
+	claudeInvocation := `/opt/claude-code/bin/claude --permission-mode bypassPermissions "Read .flywheel-prompt.md and follow ALL instructions exactly. Do not summarize or ask questions."`
+	script := j.Script("/bin/bash", "-c", fmt.Sprintf("cd /workspace && exec %s", claudeInvocation))
 	scriptPath := filepath.Join(tempBase, "jail-run.sh")
 	if err := os.WriteFile(scriptPath, []byte(script), 0755); err != nil {
 		return fmt.Errorf("write jail script: %w", err)
