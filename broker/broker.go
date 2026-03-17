@@ -347,6 +347,17 @@ func (b *broker) run() {
 		}
 		body := fmt.Sprintf("%s\n%s\n", msg.status, msg.details)
 		err := os.WriteFile(filepath.Join(b.cfg.HandoffDir, filename), []byte(body), 0644)
+		if err == nil {
+			// Notify all subscribers that a role wrote its done file.
+			for subRole := range subscribers {
+				push(subRole, BrokerEvent{
+					Event:   "write_done",
+					Role:    msg.role,
+					Summary: msg.status,
+					Content: msg.details,
+				})
+			}
+		}
 		msg.result <- err
 	}
 
