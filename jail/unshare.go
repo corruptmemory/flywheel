@@ -133,6 +133,9 @@ func (j *UnshareJail) buildScript(name string, args ...string) string {
 		cmdParts = append(cmdParts, shellQuote(a))
 	}
 	if j.dropUser != "" {
+		// Make all PTY devices accessible before dropping privileges.
+		// runuser changes to a UID that doesn't own the PTY in the namespace.
+		fmt.Fprintf(&sb, "chmod 666 %s/dev/pts/* 2>/dev/null || true\n", shellQuote(root))
 		fmt.Fprintf(&sb, "exec chroot %s runuser -u %s -- %s\n", shellQuote(root),
 			j.dropUser, strings.Join(cmdParts, " "))
 	} else {
