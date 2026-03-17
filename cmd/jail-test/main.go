@@ -164,10 +164,9 @@ func run(opts Options) error {
 	}
 
 	j := jail.NewUnshareJail(jailRoot)
-	// NOTE: We stay as namespace root (UID 0, which maps to host UID 1000).
-	// setpriv doesn't work because namespace UID 1000 maps to host UID 100999.
-	// --permission-mode bypassPermissions may not trigger the root check that
-	// --dangerously-skip-permissions does. If it does, we need a different approach.
+	// Drop from namespace root (needed for mount/chroot) to UID 1000 via nested
+	// user namespace. Claude Code refuses to run as root (UID 0).
+	j.SetDropPrivileges(1000, 1000)
 
 	homeInJail := filepath.Join(jailRoot, "home", currentUser.Username)
 	workspaceInJail := filepath.Join(jailRoot, "workspace")

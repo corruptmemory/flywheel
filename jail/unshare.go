@@ -126,23 +126,25 @@ func (j *UnshareJail) buildScript(name string, args ...string) string {
 		}
 	}
 
-	// Chroot and exec. If drop privileges configured, use setpriv to
-	// switch from root (needed for mount/chroot) to the target user.
+	// Chroot and exec. If drop privileges configured, nest a child user
+	// namespace that maps root (UID 0) to the target UID. This is needed
+	// because the outer namespace uses --map-root-user for mount/chroot,
+	// but the jailed process (e.g. Claude Code) may refuse to run as root.
 	cmdParts := []string{shellQuote(name)}
 	for _, a := range args {
 		cmdParts = append(cmdParts, shellQuote(a))
 	}
 	if j.dropUID > 0 || j.dropGID > 0 {
-		privParts := []string{"setpriv"}
+		unshareParts := []string{"unshare"}
 		if j.dropUID > 0 {
-			privParts = append(privParts, fmt.Sprintf("--reuid=%d", j.dropUID))
+			unshareParts = append(unshareParts, fmt.Sprintf("--map-user=%d", j.dropUID))
 		}
 		if j.dropGID > 0 {
-			privParts = append(privParts, fmt.Sprintf("--regid=%d", j.dropGID))
+			unshareParts = append(unshareParts, fmt.Sprintf("--map-group=%d", j.dropGID))
 		}
-		privParts = append(privParts, "--init-groups", "--")
+		unshareParts = append(unshareParts, "--")
 		fmt.Fprintf(&sb, "exec chroot %s %s %s\n", shellQuote(root),
-			strings.Join(privParts, " "), strings.Join(cmdParts, " "))
+			strings.Join(unshareParts, " "), strings.Join(cmdParts, " "))
 	} else {
 		fmt.Fprintf(&sb, "exec chroot %s %s\n", shellQuote(root), strings.Join(cmdParts, " "))
 	}
