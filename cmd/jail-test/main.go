@@ -157,6 +157,8 @@ func run(opts Options) error {
 	}
 
 	// --- Step 4: Start MCP server ---
+	// Make MCP socket dir world-writable (jailed user has different host UID)
+	os.Chmod(mcpSocketDir, 0777)
 	socketPath := filepath.Join(mcpSocketDir, "mcp.sock")
 	fmt.Printf("[jail-test] starting MCP server at %s (role: %s)\n", socketPath, opts.Role)
 	mcpServer, err := mcp.NewServer(mcp.Config{
@@ -166,6 +168,10 @@ func run(opts Options) error {
 	})
 	if err != nil {
 		return fmt.Errorf("create MCP server: %w", err)
+	}
+	// Make socket world-accessible (jailed user has different host UID via namespace mapping)
+	if err := os.Chmod(socketPath, 0777); err != nil {
+		fmt.Fprintf(os.Stderr, "[jail-test] warning: chmod socket: %v\n", err)
 	}
 	defer mcpServer.Close()
 
@@ -206,6 +212,12 @@ func run(opts Options) error {
 		mounts = append(mounts,
 			jail.BindMount(x11Socket, filepath.Join(jailRoot, "tmp/.X11-unix"), false),
 		)
+		// Copy .Xauthority for X11 auth (jailed user can't read the original)
+		xauth := filepath.Join(currentUser.HomeDir, ".Xauthority")
+		if _, err := os.Stat(xauth); err == nil {
+			exec.Command("cp", "-a", xauth, filepath.Join(homeInJail, ".Xauthority")).Run()
+			os.Chmod(filepath.Join(homeInJail, ".Xauthority"), 0666)
+		}
 	}
 
 	fmt.Printf("[jail-test] setting up jail at %s (%d mounts)\n", jailRoot, len(mounts))
