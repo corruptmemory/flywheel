@@ -1,0 +1,1175 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - iframe
+    - iframe
+    - generic [ref=e3]:
+      - generic [ref=e7]:
+        - link "Nate’s Substack" [ref=e9] [cursor=pointer]:
+          - /url: /
+          - img "Nate’s Substack" [ref=e13]
+        - heading "Nate’s Substack" [level=1] [ref=e15]:
+          - link "Nate’s Substack" [ref=e16] [cursor=pointer]:
+            - /url: /
+            - img "Nate’s Substack" [ref=e17]
+        - generic [ref=e20]:
+          - generic [ref=e21]:
+            - button "Search" [ref=e23] [cursor=pointer]:
+              - img [ref=e24]
+            - button "View chats" [ref=e28] [cursor=pointer]:
+              - img [ref=e29]
+            - button "View activity" [ref=e32] [cursor=pointer]:
+              - img [ref=e33]
+          - button "Gift a subscription" [ref=e36] [cursor=pointer]:
+            - generic [ref=e37]: Gift a subscription
+          - button "Jim Powers's avatar" [ref=e38] [cursor=pointer]:
+            - generic [ref=e39]:
+              - generic "Jim Powers" [ref=e41]:
+                - img "Jim Powers's avatar" [ref=e43]
+              - img [ref=e45]
+      - main "Post" [ref=e50]:
+        - article [ref=e54]:
+          - generic [ref=e55]:
+            - generic [ref=e57]:
+              - generic [ref=e60]:
+                - region "Video player" [ref=e62]:
+                  - generic "Your AI credentials don't matter. Your artifacts do. Here's how to build both sides — plus I'm launching Nate's Network." [ref=e64]
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: Playback speed
+                                - generic:
+                                  - generic: 1×
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: Subtitles
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: Share post
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: Share post at current time
+                    - generic [ref=e68]:
+                      - generic [ref=e70] [cursor=pointer]:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - img
+                                - generic: Share from 0:30
+                      - generic [ref=e73]:
+                        - generic [ref=e74]:
+                          - button [active] [ref=e76] [cursor=pointer]:
+                            - img [ref=e77]
+                          - button [ref=e80] [cursor=pointer]:
+                            - img [ref=e81]
+                          - button [ref=e85] [cursor=pointer]:
+                            - img [ref=e86]
+                          - generic [ref=e91]:
+                            - generic [ref=e92]: 0:08
+                            - generic [ref=e93]: /
+                            - generic [ref=e94]: 25:38
+                        - generic [ref=e96]:
+                          - button [ref=e98] [cursor=pointer]:
+                            - img [ref=e99]
+                          - button [ref=e103] [cursor=pointer]:
+                            - img [ref=e104]
+                          - button [ref=e110] [cursor=pointer]:
+                            - img [ref=e111]
+                          - button [ref=e115] [cursor=pointer]:
+                            - img [ref=e116]
+                          - button [ref=e122] [cursor=pointer]:
+                            - img [ref=e123]
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic: Transcript
+                        - button "X":
+                          - img
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - img
+                            - textbox "Search"
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: 0:00
+                                    - generic:
+                                      - generic: SPEAKER 1
+                                      - generic:
+                                        - generic:
+                                          - generic:
+                                            - generic: So
+                                            - generic: there
+                                            - generic: are
+                                            - generic: essentially
+                                            - generic: infinite
+                                            - generic: AI
+                                            - generic: jobs
+                                            - generic: right
+                                            - generic: now,
+                                            - generic: not
+                                            - generic: growing
+                                            - generic: demand,
+                                            - generic: not
+                                            - generic: a
+                                            - generic: hot
+                                            - generic: sector.
+                                            - generic: None
+                                            - generic: of
+                                            - generic: that
+                                            - generic: is
+                                            - generic: true.
+                                            - generic: It
+                                            - generic: is
+                                            - generic: functionally
+                                            - generic: infinite.
+                                            - generic: And
+                                            - generic: that's
+                                            - generic: "true"
+                                            - generic: for
+                                            - generic: businesses
+                                            - generic: employing
+                                            - generic: "10"
+                                            - generic: or
+                                            - generic: "20"
+                                            - generic: people
+                                            - generic: as
+                                            - generic: much
+                                            - generic: as
+                                            - generic: it's
+                                            - generic: "true"
+                                            - generic: for
+                                            - generic: businesses
+                                            - generic: employing
+                                            - generic: hundreds
+                                            - generic: of
+                                            - generic: thousands.
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: 0:12
+                                    - generic:
+                                      - generic:
+                                        - generic:
+                                          - generic:
+                                            - generic: There
+                                            - generic: is
+                                            - generic: "no"
+                                            - generic: functional
+                                            - generic: upper
+                                            - generic: limit
+                                            - generic: to
+                                            - generic: what
+                                            - generic: employers
+                                            - generic: would
+                                            - generic: love
+                                            - generic: to
+                                            - generic: have
+                                            - generic: as
+                                            - generic: far
+                                            - generic: as
+                                            - generic: AI
+                                            - generic: talent,
+                                            - generic: and
+                                            - generic: they
+                                            - generic: cannot
+                                            - generic: find
+                                            - generic: them.
+                                            - generic: After
+                                            - generic: hundreds
+                                            - generic: of
+                                            - generic: interviews
+                                            - generic: "on"
+                                            - generic: particular
+                                            - generic: roles,
+                                            - generic: I
+                                            - generic: am
+                                            - generic: hearing
+                                            - generic: from
+                                            - generic: employers,
+                                            - generic: we
+                                            - generic: can't
+                                            - generic: fill
+                                            - generic: the
+                                            - generic: role.
+                                            - generic: And
+                                            - generic: I
+                                            - generic: hear
+                                            - generic: you
+                                            - generic: saying,
+                                            - generic: Nate,
+                                            - generic: that
+                                            - generic: must
+                                            - generic: be
+                                            - generic: a
+                                            - generic: lie.
+                                            - generic: I
+                                            - generic: have
+                                            - generic: applied
+                                            - generic: for
+                                            - generic: hundreds
+                                            - generic: of
+                                            - generic: AI
+                                            - generic: positions.
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: 0:32
+                                    - generic:
+                                      - generic:
+                                        - generic:
+                                          - generic:
+                                            - generic: I
+                                            - generic: am
+                                            - generic: good
+                                            - generic: at
+                                            - generic: AI.
+                                            - generic: It
+                                            - generic: is
+                                            - generic: not
+                                            - generic: working.
+                                            - generic: I
+                                            - generic: get
+                                            - generic: it.
+                                            - generic: We
+                                            - generic: have
+                                            - generic: a
+                                            - generic: K-shaped
+                                            - generic: job
+                                            - generic: market
+                                            - generic: right
+                                            - generic: now.
+                                            - generic: And
+                                            - generic: there
+                                            - generic: is
+                                            - generic: a
+                                            - generic: split
+                                            - generic: in
+                                            - generic: what
+                                            - generic: employers
+                                            - generic: want
+                                            - generic: that
+                                            - generic: is
+                                            - generic: confusing
+                                            - generic: this
+                                            - generic: issue,
+                                            - generic: because
+                                            - generic: many
+                                            - generic: employers
+                                            - generic: who
+                                            - generic: don't
+                                            - generic: fully
+                                            - generic: know
+                                            - generic: AI
+                                            - generic: are
+                                            - generic: taking
+                                            - generic: advantage
+                                            - generic: of
+                                            - generic: this
+                                            - generic: situation
+                                            - generic: by
+                                            - generic: basically
+                                            - generic: putting
+                                            - generic: resumes
+                                            - generic: out
+                                            - generic: as
+                                            - generic: learning
+                                            - generic: tools.
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: 0:51
+                                    - generic:
+                                      - generic:
+                                        - generic:
+                                          - generic:
+                                            - generic: And
+                                            - generic: then
+                                            - generic: they
+                                            - generic: use
+                                            - generic: the
+                                            - generic: interviews
+                                            - generic: to
+                                            - generic: learn
+                                            - generic: from
+                                            - generic: the
+                                            - generic: talent
+                                            - generic: what
+                                            - generic: they
+                                            - generic: need,
+                                            - generic: which
+                                            - generic: is
+                                            - generic: really
+                                            - generic: terrible.
+                                            - generic: Right.
+                                            - generic: Like
+                                            - generic: that's
+                                            - generic: not
+                                            - generic: the
+                                            - generic: way
+                                            - generic: you
+                                            - generic: should
+                                            - generic: be
+                                            - generic: interacting
+                                            - generic: with
+                                            - generic: talent.
+                                            - generic: It
+                                            - generic: doesn't
+                                            - generic: bring
+                                            - generic: the
+                                            - generic: best
+                                            - generic: people
+                                            - generic: to
+                                            - generic: you
+                                            - generic: and
+                                            - generic: it
+                                            - generic: leaves
+                                            - generic: a
+                                            - generic: bad
+                                            - generic: taste
+                                            - generic: in
+                                            - generic: everyone's
+                                            - generic: mouth.
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: 1:06
+                                    - generic:
+                                      - generic:
+                                        - generic:
+                                          - generic:
+                                            - generic: There
+                                            - generic: are
+                                            - generic: also
+                                            - generic: plenty
+                                            - generic: of
+                                            - generic: people
+                                            - generic: who
+                                            - generic: are
+                                            - generic: looking
+                                            - generic: for
+                                            - generic: roles
+                                            - generic: who
+                                            - generic: are
+                                            - generic: either
+                                            - generic: overstating
+                                            - generic: their
+                                            - generic: capabilities
+                                            - generic: or
+                                            - generic: who
+                                            - generic: don't
+                                            - generic: have
+                                            - generic: the
+                                            - generic: actual
+                                            - generic: skill
+                                            - generic: sets
+                                            - generic: needed
+                                            - generic: to
+                                            - generic: thrive
+                                            - generic: in
+                                            - generic: AI.
+                                            - generic: I'm
+                                            - generic: not
+                                            - generic: talking
+                                            - generic: about
+                                            - generic: being
+                                            - generic: able
+                                            - generic: to
+                                            - generic: chat
+                                            - generic: with
+                                            - generic: the
+                                            - generic: AI,
+                                            - generic: right?
+                                            - generic: I'm
+                                            - generic: going
+                                            - generic: to
+                                            - generic: give
+                                            - generic: you
+                                            - generic: in
+                                            - generic: this
+                                            - generic: video
+                                            - generic: seven
+                                            - generic: specific
+                                            - generic: skill
+                                            - generic: sets
+                                            - generic: that
+                                            - generic: I
+                                            - generic: have
+                                            - generic: pulled
+              - generic [ref=e128]:
+                - button [ref=e129] [cursor=pointer]:
+                  - img [ref=e130]
+                - button "Like (107)" [ref=e137] [cursor=pointer]:
+                  - img [ref=e138]:
+                    - img [ref=e140]
+                  - generic [ref=e142]: "107"
+                - button "View comments (8)" [ref=e143] [cursor=pointer]:
+                  - img [ref=e144]:
+                    - img [ref=e146]
+                  - generic [ref=e148]: "8"
+                - button "3" [ref=e149] [cursor=pointer]:
+                  - img [ref=e150]
+                  - generic [ref=e153]: "3"
+                - button [ref=e154] [cursor=pointer]:
+                  - img [ref=e155]
+              - generic [ref=e158]:
+                - button "Video" [ref=e160] [cursor=pointer]:
+                  - img [ref=e161]
+                - button "Headphones" [ref=e166] [cursor=pointer]:
+                  - img [ref=e167]
+            - generic [ref=e169]:
+              - generic [ref=e171]:
+                - generic [ref=e173]:
+                  - generic [ref=e174]:
+                    - heading "Your AI credentials don't matter. Your artifacts do. Here's how to build both sides — plus I'm launching Nate's Network." [level=2] [ref=e175]
+                    - generic [ref=e176]: If you're trying to get hired in AI, artifacts > resumes.
+                  - generic [ref=e177]:
+                    - link "View Nate's profile" [ref=e182] [cursor=pointer]:
+                      - /url: https://substack.com/@natesnewsletter
+                      - generic "Nate" [ref=e184]:
+                        - img "Nate's avatar" [ref=e186]
+                    - generic [ref=e187]:
+                      - link "Nate" [ref=e190] [cursor=pointer]:
+                        - /url: https://substack.com/@natesnewsletter
+                      - generic [ref=e191]:
+                        - generic [ref=e192]: Mar 26, 2026
+                        - generic [ref=e193]: ∙ Paid
+                  - generic [ref=e194]:
+                    - generic [ref=e195]:
+                      - button "Like (107)" [ref=e197] [cursor=pointer]:
+                        - img [ref=e198]:
+                          - img [ref=e200]
+                        - generic [ref=e202]: "107"
+                      - button "View comments (8)" [ref=e203] [cursor=pointer]:
+                        - img [ref=e204]:
+                          - img [ref=e206]
+                        - generic [ref=e208]: "8"
+                      - button "3" [ref=e209] [cursor=pointer]:
+                        - img [ref=e210]
+                        - generic [ref=e213]: "3"
+                    - generic [ref=e214]:
+                      - button "Share" [ref=e215] [cursor=pointer]:
+                        - generic [ref=e216]: Share
+                      - button "Transcript" [ref=e217] [cursor=pointer]:
+                        - img [ref=e218]
+                        - generic [ref=e219]: Transcript
+                      - button [ref=e220] [cursor=pointer]:
+                        - img [ref=e221]
+                - generic [ref=e225]:
+                  - generic [ref=e228]:
+                    - paragraph [ref=e229]:
+                      - text: "Nobody is admitting this publicly, so I will:"
+                      - strong [ref=e230]: there are essentially infinite AI jobs right now.
+                      - text: Not “growing demand.” Not “a hot sector.” Infinite, as in every company I work with has an uncapped budget for AI talent and will hire as many qualified people as they can find, and they still can’t find enough. I’ve been kicking around tech for decades and I have never seen a labor market this lopsided. Accenture is training 700,000 people on agentic AI. The ManpowerGroup survey of 39,000 employers across 41 countries says AI skills are now the single hardest capability to find on Earth. Not among the hardest. The hardest.
+                    - paragraph [ref=e231]: And nobody is breaking down the specific, learnable skills you actually need to get those jobs.
+                    - paragraph [ref=e232]: "I dug through hundreds of real job postings at companies hiring right now: Anthropic, Robinhood, Upwork, Glean, Scale AI, and dozens more. I found seven skills that show up consistently across all of them, whether the title is AI Engineer, AI Product Manager, Agent Operations Lead, or domain specialist. They are specific. They are learnable. And most people already have two or three of them from whatever they’re doing right now."
+                    - paragraph [ref=e233]: "If you’re reading this thinking “that’s not for me,” it’s extra for you. We are short people for the AI economy. You don’t need a CS degree. Paul Graham and Sam Altman keep saying the magic word is “taste.” Poggio cofounder Matt Slotnick called that out: “The taste thing works because it’s nebulous, unassailable, and it feeds the ego.” He’s right. Taste is not a skill. But the seven concrete things underneath it are."
+                    - paragraph [ref=e234]: "The reason the gap keeps widening despite the ocean of “AI upskilling” content is that almost none of it maps to what employers are actually hiring for. It’s taught at the wrong altitude: “AI for Everyone” at the top, deep ML engineering at the bottom, and the entire middle layer barely exists as curriculum. It teaches tools when employers are hiring for judgment. Most courses show you how to use ChatGPT; employers are hiring for “agentic evaluation mindset, including automated evals, simulation-based testing, regression frameworks, and metrics design.” And the credentials are mostly worthless. DataCamp surveyed 500 enterprise leaders this year: 40% of AI training is video courses, 23% of leaders say it doesn’t translate to real work. As recently as 2024, Accenture’s own data showed only 26% of workers had received training on how to actually collaborate with AI. The certification landscape is mostly badges from Saturday afternoon lectures that hiring managers have been ignoring for years."
+                    - paragraph [ref=e235]: So I’m building something different.
+                    - paragraph [ref=e236]:
+                      - strong [ref=e237]: "Here’s what’s inside:"
+                    - list [ref=e238]:
+                      - listitem [ref=e239]:
+                        - paragraph [ref=e240]:
+                          - strong [ref=e241]: The K-shaped split.
+                          - text: Why “infinite jobs” and “I can’t get hired” are both true at the same time, and which side of the split you’re on.
+                      - listitem [ref=e242]:
+                        - paragraph [ref=e243]:
+                          - strong [ref=e244]: The hiring side is broken too.
+                          - text: A meaningful percentage of AI job postings aren’t real job postings, and a code of conduct for fixing it.
+                      - listitem [ref=e245]:
+                        - paragraph [ref=e246]:
+                          - strong [ref=e247]: The seven skills that pay $150K–$400K.
+                          - text: Extracted from real postings at Anthropic, Robinhood, Upwork, Glean, and Scale AI, mapped to four career tracks with a twelve-week learning path using entirely free materials.
+                      - listitem [ref=e248]:
+                        - paragraph [ref=e249]:
+                          - strong [ref=e250]: Nate’s Network.
+                          - text: I’m launching a vetted AI talent network that is built to match the right people to the right roles faster, based on what they have actually built and trained on.
+                    - paragraph [ref=e251]: The labor market has a structure that most people can’t see. Once you can, the path through it gets specific.
+                    - paragraph
+                    - 'heading "LINK: Nate’s Network - Intake Form Link" [level=2] [ref=e252]':
+                      - text: "LINK:"
+                      - link "Nate’s Network - Intake Form" [ref=e253] [cursor=pointer]:
+                        - /url: https://product-templates.notion.site/d055a2ccb52683f08c4981556bb6d7b6?pvs=105
+                      - button "Link" [ref=e256] [cursor=pointer]:
+                        - img [ref=e257]
+                    - paragraph [ref=e260]: The hiring market is broken on both sides, and the traditional job board makes it worse. Keyword filters and résumé parsing are how you get 142-day time-to-fill on roles that a hundred people applied for.
+                    - paragraph [ref=e261]: So I’m building something different. Nate’s Network is launching in beta this week as a vetted AI talent network for this community, designed around the seven skills I will describe. It’s not a job board. It’s an attempt to fix the matching problem from both directions at once.
+                    - paragraph [ref=e262]: "If you’re talent, your profile isn’t a résumé. It asks you to show what you’ve actually built: pick a workflow where AI changed your output and show the before and after. Describe a specification you wrote that an agent executed without hand-holding. Name the most complex task you’ve fully handed off to an AI system and explain what happened. The profile is structured around the seven skills in this article, so you get matched based on what you can demonstrate, not what your résumé claims."
+                    - paragraph [ref=e263]: "If you’re hiring, the intake process forces the same discipline I described earlier in this piece: what are the specific AI-augmented responsibilities for this role, what proficiency level does it actually require, and what does the role look like in twelve months? You get fewer, higher-quality candidates who’ve already shown they can do the work, instead of sifting through a hundred applications from people who listed “AI” on their LinkedIn."
+                    - paragraph [ref=e264]: We’re starting with a founding cohort. If you want in, whether you’re building these skills or hiring for them, the intake form linked above. It’s subscriber-gated, and every profile will be vetted before it’s listed. Early entrants shape what gets built.
+                    - paragraph [ref=e265]: The gap between market one and market two is closable, on both sides. The question is who starts this week.
+                    - 'heading "LINK: Grab the Prompts Link" [level=2] [ref=e266]':
+                      - text: "LINK:"
+                      - link "Grab the Prompts" [ref=e267] [cursor=pointer]:
+                        - /url: https://promptkit.natebjones.com/20260322_jhq_promptkit_1
+                      - button "Link" [ref=e270] [cursor=pointer]:
+                        - img [ref=e271]
+                    - paragraph [ref=e274]: "Every AI upskilling article ends the same way: the reader feels motivated, closes the tab, and builds nothing. These five prompts exist to break that pattern."
+                    - paragraph [ref=e275]:
+                      - text: "Two are for hirers: the"
+                      - strong [ref=e276]: Role Specification Builder
+                      - text: forces outcome-first discipline before you waste a hundred candidates’ time, and the
+                      - strong [ref=e277]: Job Posting Audit
+                      - text: tells you whether your live posting attracts Market Two talent or repels it.
+                    - paragraph [ref=e278]:
+                      - text: "Three are for talent: the"
+                      - strong [ref=e279]: Agent Product Spec Builder
+                      - text: produces the single highest-leverage portfolio artifact for PMs and ops professionals, the
+                      - strong [ref=e280]: Failure Post-Mortem Builder
+                      - text: turns a real system failure into a published piece that gets noticed, and the
+                      - strong [ref=e281]: Domain Evaluation Framework Builder
+                      - text: is the domain specialist’s equivalent of an open-source project. Artifacts over badges. Every one produces something you can publish this week.
+                    - heading "The K-shaped split Link" [level=2] [ref=e282]:
+                      - text: The K-shaped split
+                      - button "Link" [ref=e285] [cursor=pointer]:
+                        - img [ref=e286]
+                    - paragraph [ref=e289]: The AI labor market is not one market. It’s two markets moving in opposite directions simultaneously, which is why people looking at the same economy reach opposite conclusions.
+                    - paragraph [ref=e290]: "Market one: traditional knowledge-work roles. Generalist product managers, standard software engineers, conventional business analysts, run-the-playbook marketing managers. These roles are contracting. Analysis of US job postings from 2019 through early 2025 shows that openings for routine, automation-prone roles fell 13% after ChatGPT launched. HSBC is weighing 20,000 job cuts. Accenture cut roughly 11,000 roles while simultaneously committing $3 billion to AI and nearly doubling its AI and data specialists to 77,000. Fewer people doing the old work, more people doing the new work, same company. If you’re in market one, your experience of the economy is accurate: it’s harder to get hired, there are fewer seats, and the competition for remaining positions is intense."
+                    - paragraph [ref=e291]: "Market two: roles that design, build, operate, manage, or extend AI systems. This market is expanding so fast that the demand-to-supply ratio sits at 3.2 to 1 globally, with over 1.6 million open positions and roughly 518,000 qualified candidates. ManpowerGroup’s 2026 survey found AI skills have surpassed all others to become the single hardest capability to hire for, overtaking traditional engineering and IT for the first time in the survey’s history. Seventy-two percent of employers report difficulty hiring. The average time to fill an AI role: 142 days."
+                    - paragraph [ref=e292]: The people who tell me I’m lying are in market one looking at market two and seeing a mirage. The people who tell me every company has infinite budget are in market two looking at market one and wondering what the fuss is about. They’re both describing reality. They’re just describing different realities.
+                    - paragraph [ref=e293]: And the gap between market one and market two is a skills gap. Not a credentials gap. Not a network gap. A specific, measurable, addressable skills gap, centered on capabilities that most “AI upskilling” programs don’t teach, that most boot camps haven’t figured out yet, and that the market is pricing at $150,000 to $400,000 a year depending on the role, the seniority, and the geography.
+                    - paragraph [ref=e294]: But the skills gap isn’t the only thing keeping the two markets apart.
+                    - heading "The hiring side is broken too Link" [level=2] [ref=e295]:
+                      - text: The hiring side is broken too
+                      - button "Link" [ref=e298] [cursor=pointer]:
+                        - img [ref=e299]
+                    - paragraph [ref=e302]: "A thing I don’t hear anyone saying publicly, so I’ll say it: a meaningful percentage of AI job postings are not job postings. They’re market research disguised as hiring."
+                    - paragraph [ref=e303]: Companies that don’t understand AI are writing job descriptions as a way to figure out what they want. They post a role with a vague title like “AI Strategist” or “Head of AI Transformation” and a requirements list that reads like someone fed ChatGPT the prompt “what does an AI person do?” They list fifteen different skill sets spanning machine learning engineering, product management, prompt engineering, data science, and executive communications, because they haven’t done the work of deciding which of those things they actually need. Then they interview a hundred people, reject all of them, and conclude there’s a talent shortage.
+                    - paragraph [ref=e304]: There isn’t a talent shortage in that scenario. There’s a specification shortage. The company is using the hiring process as a discovery mechanism, and they’re burning candidates’ time in the process. Good candidates see through this immediately. An experienced AI architect reads a job posting that asks for “hands-on coding experience AND executive stakeholder management AND model fine-tuning AND go-to-market strategy” and knows the company hasn’t decided whether they need an engineer or an executive. They don’t apply. The company gets a hundred applications from people who don’t notice the incoherence, rejects them all, and the ManpowerGroup survey records another data point about AI talent being hard to find.
+                    - paragraph [ref=e305]: This is disrespectful to candidates, and I want to name it directly. AI job postings are not your casino wheel for the market. If you are hiring AI talent and you cannot clearly articulate what outcomes you want (not “faster and better,” specific outcomes with specific metrics) you are not ready to hire. You are ready to do the internal work of figuring out what you’re trying to accomplish with AI, and that’s a different project that should happen before you post a role.
+                    - paragraph [ref=e306]: "My GM, who runs our operations and watches this hiring cycle from both sides, put it sharply: if you can’t tell a candidate what success looks like in the role, you’re not going to attract the right people. You’re going to attract people who are good at interviews and bad at delivery. The candidates who can actually do the work, the ones in market two who have multiple offers, will pattern-match your incoherent job posting to “this company doesn’t know what it wants” and move on to the company that does."
+                    - paragraph [ref=e307]: "A code of conduct for AI hiring looks like this:"
+                    - paragraph [ref=e308]: Define the outcome before you define the role. Not “we need an AI person.” What business outcome? Reduce manual document review by 70%? Build an agent system for tier-one customer support? Automate the quarterly compliance audit? The outcome determines the role.
+                    - paragraph [ref=e309]: Pick one track, not four. Do you need someone to build the system, specify what it should do, keep it running, or apply it in a specific domain? Those are different people with different skills. A posting that combines all four is a confession that you haven’t thought it through.
+                    - paragraph [ref=e310]: "Publish your evaluation criteria. Not “drive AI adoption.” Measurable outcomes: “Reduce time-to-resolution on support tickets by 40% within six months using an agent system.” Specific candidates will self-select in."
+                    - paragraph [ref=e311]: Respect the time. If you’re using interviews as discovery, say so and pay for it. Call it a consulting engagement. Don’t disguise organizational confusion as a hiring pipeline.
+                    - paragraph [ref=e312]: "Both sides are contributing to this dysfunction. The candidate needs to build the skills. The employer needs to do their homework. Now: the skills."
+                    - heading "“Taste” is not a skill. These seven things are. Link" [level=2] [ref=e313]:
+                      - text: “Taste” is not a skill. These seven things are.
+                      - button "Link" [ref=e316] [cursor=pointer]:
+                        - img [ref=e317]
+                    - paragraph [ref=e320]: "Everyone keeps reaching for the same word. Paul Graham wrote about taste. Sam Altman endorsed it. Slotnick’s critique landed because the discourse had gotten circular: “develop taste” flatters people who already think they have good judgment and offers nothing to people trying to build it. It’s the AI-era equivalent of “just be smarter.” Technically true, completely useless."
+                    - paragraph [ref=e321]: "So I did something different. I pulled actual job postings from companies that are hiring right now: Anthropic, Robinhood, Upwork, Glean, Scale AI, Pair Team, Obsidian Security, Sierra, Decagon, and others. Not think-piece definitions of what AI workers should know. Actual requirements from actual hiring managers spending actual budget. Then I cross-referenced those postings against the Claude Certified Architect exam, Anthropic’s own engineering blog on evaluation methodology, and what I see in hiring pipelines across my advisory work."
+                    - paragraph [ref=e322]: Seven skills show up repeatedly. They are specific. They are learnable. Most people already have two or three of them from their existing career. The market-two premium comes from having five or more, and depth in at least three.
+                    - paragraph [ref=e323]: These aren’t seven disconnected items on a checklist. They’re a progression. They mirror what it actually looks like to go from “I use ChatGPT sometimes” to “I run agent systems in production.” Each one builds on the last. Each one creates the need for the next.
+                    - heading "Specification precision Link" [level=2] [ref=e324]:
+                      - text: Specification precision
+                      - button "Link" [ref=e327] [cursor=pointer]:
+                        - img [ref=e328]
+                    - paragraph [ref=e331]: "It starts with the most fundamental shift: learning to talk to a machine that takes you literally."
+                    - paragraph [ref=e332]: Most of us have spent entire careers working with humans who can read between the lines, infer intent from context, and fill gaps with common sense. Agents don’t do any of that. An agent takes your specification and executes at scale. If the spec is vague, the output is vague at scale. If the spec has ambiguous edge cases, the agent handles them randomly, at scale.
+                    - paragraph [ref=e333]: "The gap is easier to show than explain. “Make our customer support better” is a fine Monday morning standup brief for a human team. It’s useless for an agent. Compare it to: “Build an agent that handles tier-one tickets: password resets, order status inquiries, and return initiations. Escalate to a human when customer sentiment drops below a defined threshold or when the issue involves billing disputes over $500. Log every escalation with the reason code for weekly review.” Same intent. Completely different level of precision."
+                    - paragraph [ref=e334]: "This is what Pair Team means when their posting asks for the ability to “translate ambiguity into clear technical solutions.” What Glean means when they say “you define the problem as often as you solve it.” What Anthropic’s Agent Platform PM role means when it requires communicating product vision across research, engineering, safety, and business teams. They’re all asking for the same underlying muscle: can you define success criteria before you start, anticipate edge cases, and distinguish hard constraints from soft preferences? Can you tell the difference between a rule that must never be violated and a guideline the agent should follow unless the situation calls for flexibility?"
+                    - paragraph [ref=e335]: If you’ve ever written a detailed contract, a comprehensive test plan, or a regulatory filing, you’re closer to this than you think. The executor changed. The precision requirement didn’t.
+                    - paragraph [ref=e336]: "To build it: take a task you do regularly and write a specification precise enough that someone who has never done the task, and can’t ask you questions, could complete it correctly. Then hand it to an AI agent. The gap between what you intended and what the agent produced is your specification gap, made visible."
+                    - heading "Evaluation and quality judgment Link" [level=2] [ref=e337]:
+                      - text: Evaluation and quality judgment
+                      - button "Link" [ref=e340] [cursor=pointer]:
+                        - img [ref=e341]
+                    - paragraph [ref=e344]: "Once you can specify precisely, you immediately face the harder question: how do you know whether the output is actually good?"
+                    - paragraph [ref=e345]: "This is what the “taste” discourse is actually about, decomposed into something you can practice. And it’s the single most frequently cited skill across every posting I reviewed, whether the role is engineering, PM, or ops. The language varies: Pair Team asks for “agentic evaluation mindset.” Upwork demands “evaluation harnesses for functional, task, and longitudinal metrics.” Anthropic wants engineers who can “build a scaled model evaluation framework.” Scale AI centers its PM role on “evaluation frameworks that advance RL and agentic model capabilities.” Every single posting. Different words, same skill."
+                    - paragraph [ref=e346]: It has four parts, each its own discipline.
+                    - paragraph [ref=e347]: "Start with error detection under fluency. AI has a failure mode fundamentally different from human error: it’s confidently, fluently, plausibly wrong. A human who doesn’t know the answer hesitates. A model produces a polished paragraph with equal confidence whether the content is correct or fabricated. A financial model with elegant formulas and one silently wrong assumption. A legal summary that’s well-structured but omits the clause that changes the conclusion. The skill is resisting the fluency heuristic, the cognitive bias where “if it reads well, it must be right.” If you’ve spent your career editing, auditing, or reviewing other people’s work, you already have an instinct for when something is too clean. That instinct is worth a lot right now."
+                    - paragraph [ref=e348]: Then there’s edge case detection. AI handles the common case beautifully and the edge case terribly. The compliance report that processes standard filings without issue but misclassifies an unusual entity structure. The support agent that resolves routine tickets flawlessly but gives dangerous advice on a product safety question. Finding these cases before your users do is the skill.
+                    - paragraph [ref=e349]: "Test case design is the third. Not random testing, but targeted probes based on where your domain gets tricky. Anthropic’s engineering blog puts it precisely: “A good task is one where two domain experts would independently reach the same pass/fail verdict.” If you can design those tasks for your field, you have the evaluation skill the market is paying for."
+                    - paragraph [ref=e350]: And then monitoring, which is where most people stop too early. Evaluation isn’t a one-time gate. It’s continuous. What metrics do you track in production? How do you detect quality drift? When evaluation reveals a problem, what’s the process for turning that finding into a system improvement?
+                    - paragraph [ref=e351]: "To build all four at once: run an AI system on real tasks in your domain. Review every output as if your name were going on it. Keep an error log categorized by failure type. After two weeks you’ll have a personal taxonomy of how AI fails in your field. That taxonomy is the evaluation skill the market is paying a premium for."
+                    - heading "Decomposition for delegation Link" [level=2] [ref=e352]:
+                      - text: Decomposition for delegation
+                      - button "Link" [ref=e355] [cursor=pointer]:
+                        - img [ref=e356]
+                    - paragraph [ref=e359]: This is where the shift happens from using an AI tool to architecting AI systems.
+                    - paragraph [ref=e360]: "A bad decomposition: “Agent: do the quarterly compliance review.” A good one looks completely different. Document ingestion agent retrieves all filings from the regulatory database. Classification agent categorizes each filing by type and flags unusual entity structures. Risk assessment agent evaluates flagged filings against criteria and produces preliminary ratings. Human checkpoint: senior compliance officer reviews all high-risk filings. Report generation agent compiles reviewed filings with the officer’s annotations. Five steps. Clear handoffs. The human is in the loop exactly where judgment matters most."
+                    - paragraph [ref=e361]: "The difference between those two versions is what every posting for agentic roles is actually asking for. Upwork spells it out: “multi-agent systems — planning, tool-use, memory, debate/critique, reflection — with robust guardrails and recovery strategies.” Anthropic’s agents team wants people who help Claude “coordinate with groups of other agents at many different scales.” Pair Team asks engineers to “define and build architectural patterns for agent reasoning, tool use, memory, and human-in-the-loop collaboration.”"
+                    - paragraph [ref=e362]: "This sounds like regular project management. It isn’t, because agents have fundamentally different constraints than human team members. Humans can hold ambiguous instructions, use background knowledge the plan doesn’t mention, and exercise common sense. Agents operate within defined context windows, are non-deterministic, need explicit success criteria per sub-task, and create coordination overhead when working in parallel. The skill is looking at a workflow and classifying each piece: which parts are reasoning tasks, which are retrieval tasks, which are judgment calls that need a human checkpoint, and which are coordination tasks that need an orchestrator?"
+                    - paragraph [ref=e363]: If you’ve ever broken large projects into workstreams for teams with different skills, you already have this muscle. You’re doing the same work, but now you’re accounting for what agents can and can’t hold in their heads.
+                    - heading "Failure pattern recognition Link" [level=2] [ref=e364]:
+                      - text: Failure pattern recognition
+                      - button "Link" [ref=e367] [cursor=pointer]:
+                        - img [ref=e368]
+                    - paragraph [ref=e371]: "The moment you run multi-agent workflows on real problems, you discover something no tutorial prepares you for: these systems fail in specific, recurring, and predictable ways. “AI hallucinates sometimes” doesn’t begin to cover it."
+                    - paragraph [ref=e372]: "I want to be transparent: the taxonomy below is my synthesis from watching production agent systems fail across multiple client engagements. Each pattern is individually well-documented. Bundling them into a six-pattern framework is my construction. I present it because no one else is teaching them together, and because recognizing all six in the wild is genuinely differentiating."
+                    - paragraph [ref=e373]:
+                      - strong [ref=e374]: Context degradation.
+                      - text: Quality drops as sessions get long because effective attention on early context weakens. Detect it by tracking output quality over session length. Mitigate it with session boundaries and fresh-start protocols.
+                    - paragraph [ref=e375]:
+                      - strong [ref=e376]: Specification drift.
+                      - text: Over a long task, the agent gradually deviates from original intent. Each small interpretation choice compounds until, by step fifty, it’s solving a subtly different problem than the one you assigned. Periodic checkpoint evaluations catch this. Explicit re-anchoring prompts prevent it.
+                    - paragraph [ref=e377]:
+                      - strong [ref=e378]: Sycophantic confirmation.
+                      - text: The agent agrees with wrong premises instead of pushing back. You say “our conversion rate is 12%” when it’s actually 1.2%, and the agent builds an entire analysis on the wrong number without blinking. Test for this by deliberately introducing errors and seeing if the agent catches them.
+                    - paragraph [ref=e379]:
+                      - strong [ref=e380]: Tool selection errors.
+                      - text: In multi-tool systems, the agent picks the wrong tool because descriptions overlap or are underspecified. The Claude Certified Architect exam tests this specifically. Tool description quality is the single highest-impact intervention in most agent systems.
+                    - paragraph [ref=e381]:
+                      - strong [ref=e382]: Cascade failure.
+                      - text: One agent’s error propagates through the chain. Research agent retrieves wrong data. Analysis agent builds on it. Reporting agent presents the wrong analysis confidently. No single agent failed catastrophically. The system-level output is garbage. You catch this with inter-agent output validation and independent verification steps.
+                    - paragraph [ref=e383]:
+                      - strong [ref=e384]: Silent failure.
+                      - text: The most dangerous pattern. The agent produces plausible-looking output that is wrong, with no error signal. No exception. No confidence flag. It looks identical to correct output. The only defense is statistical sampling, human review, and anomaly detection.
+                    - paragraph [ref=e385]: "If you come from SRE, QA, risk management, or operations, you already think in failure modes. These are the six AI-specific ones to add to your model. And one of the most effective job-search artifacts I know is a published post-mortem: build an agent system, deliberately trigger these patterns, log what happens, document the fix."
+                    - heading "Trust boundary and security design Link" [level=2] [ref=e386]:
+                      - text: Trust boundary and security design
+                      - button "Link" [ref=e389] [cursor=pointer]:
+                        - img [ref=e390]
+                    - paragraph [ref=e393]: "A compliance officer I work with told me she evaluates every new AI workflow with a single question: “What’s the worst thing that happens if this is wrong, and can I undo it?” That question, applied systematically, is the entire discipline of trust boundary design."
+                    - paragraph [ref=e394]: "The framework has four variables and they interact. Cost of error: a misspelled draft email is cheap, an incorrect drug interaction flag is potentially lethal. Reversibility: a draft reviewed before sending can be fixed, a financial transaction that settles in real time cannot. Frequency: a task that happens ten thousand times daily can’t have full human review; you need automated evaluation with human sampling. Verifiability: if you can check output after the fact, you can afford lighter real-time oversight; if it’s consumed immediately (a live customer conversation, a real-time trading decision) oversight must be synchronous."
+                    - paragraph [ref=e395]: Every regulated-industry posting I reviewed asked for this skill, and increasingly the non-regulated ones do too. Robinhood wants “the right tradeoffs for risk and long-term maintainability.” Obsidian Security has an entire PM role for “security risks unique to AI agents.” Glean has a dedicated PM for AI governance.
+                    - paragraph [ref=e396]: And the security dimension is growing fast. Prompt injection, data exfiltration through tool calls, privilege escalation. These aren’t theoretical. They’re the reason companies are hiring PMs specifically for agent security. If you’ve spent your career in risk, compliance, or information security, you’ve been designing trust boundaries for human workers all along. These are trust boundaries for AI workers, with an added adversarial dimension.
+                    - heading "Context architecture Link" [level=2] [ref=e397]:
+                      - text: Context architecture
+                      - button "Link" [ref=e400] [cursor=pointer]:
+                        - img [ref=e401]
+                    - paragraph [ref=e404]: What information does the AI need, when does it need it, and in what form?
+                    - paragraph [ref=e405]: Anthropic’s own postings call this “context engineering.” The Claude Certified Architect exam dedicates 15% of its weight to it. Every engineering posting mentions RAG pipeline design, context window management, or memory systems.
+                    - paragraph [ref=e406]: "The core distinction: persistent context (always loaded: coding standards, compliance rules, brand voice) versus per-session context (loaded when relevant: this customer’s history, this specific document). The hierarchy matters because context windows have finite capacity and because irrelevant information doesn’t just waste space. It actively degrades performance. It’s noise that dilutes signal. Knowing what to include versus omit, when a summary preserves what matters versus when full detail is necessary, when accumulated context has degraded quality enough to warrant a fresh session. These are the sub-skills, and they belong to anyone who has organized information for retrieval rather than storage. Librarians, information architects, technical writers, knowledge managers. The translation is direct: you’re organizing information for a specific retriever with specific attention patterns and capacity constraints."
+                    - heading "Cost and token economics Link" [level=2] [ref=e407]:
+                      - text: Cost and token economics
+                      - button "Link" [ref=e410] [cursor=pointer]:
+                        - img [ref=e411]
+                    - paragraph [ref=e414]:
+                      - text: Everything in the progression so far answers whether an agent system
+                      - emphasis [ref=e415]: can
+                      - text: work. This skill answers whether it
+                      - emphasis [ref=e416]: should
+                      - text: .
+                    - paragraph [ref=e417]: A senior model like Claude Opus or GPT-4 costs roughly 10 to 50 times more per token than a smaller model like Haiku or GPT-4o Mini. An agent workflow that routes every step through the most powerful model might work beautifully and cost $50 per task. The same workflow redesigned to use a smaller model for simple classification and reserve the expensive model for complex reasoning might cost $3 per task at the same quality. If it runs once, the difference is trivial. If it runs ten thousand times a day, you’ve just decided whether the project has a business case.
+                    - paragraph [ref=e418]: "This was in almost every senior posting I reviewed and is completely absent from most AI upskilling content. Upwork requires engineers to “optimize cost/performance via quantization, distillation, model-routing, and autoscaling.” Turgon AI’s PM must “define success metrics: latency, accuracy, cost per job, automation coverage.” These are real production constraints, and the people who can model them before a team burns three months building something economically nonviable are rare and highly compensated."
+                    - paragraph [ref=e419]: "The sub-skills: understanding inference cost structure (input tokens, output tokens, context window usage, caching), modeling total cost across all workflow steps, knowing which sub-tasks can run on a cheaper model without quality loss, and understanding batch versus real-time tradeoffs. If you’ve ever modeled unit economics or run cost-benefit analyses, this is the same analytical skill applied to inference costs instead of headcount. An agent cost model for a specific workflow is something almost nobody produces and something every hiring manager in production AI would find valuable."
+                    - heading "How these map to careers Link" [level=2] [ref=e420]:
+                      - text: How these map to careers
+                      - button "Link" [ref=e423] [cursor=pointer]:
+                        - img [ref=e424]
+                    - paragraph [ref=e427]: That’s the full arc. Specify precisely. Evaluate rigorously. Decompose for delegation. Recognize failure patterns. Design trust boundaries. Architect the context. Make the economics work. The market-two premium comes from depth in at least three and working knowledge of five or more.
+                    - paragraph [ref=e428]: "These map across four career tracks:"
+                    - paragraph [ref=e429]:
+                      - strong [ref=e430]: AI Systems Architect / Agentic Engineer ($150K–$320K)
+                      - text: "needs depth across the full progression with emphasis on decomposition, failure patterns, context architecture, and cost economics. The Claude Certified Architect: Foundations exam ($99, all prep courses free on Anthropic Academy) maps closely here and is the most rigorous standardized test of these skills for the engineering path."
+                    - paragraph [ref=e431]:
+                      - strong [ref=e432]: AI Product Manager ($133K–$437K+)
+                      - text: needs depth in specification precision, evaluation, decomposition, and trust boundaries. Research on 12,000+ AI PM hires found 60% don’t come from CS backgrounds. The market pays for people who understand what to build and whether it’s working, not people who write the code.
+                    - paragraph [ref=e433]:
+                      - strong [ref=e434]: Agent Operations / AI Reliability ($130K–$250K)
+                      - text: needs depth in failure patterns, trust boundaries, evaluation (especially monitoring), and cost economics. The least defined track with the most open running room. If you have an operations, SRE, QA, or program management background, the translation is shorter than you think.
+                    - paragraph [ref=e435]:
+                      - strong [ref=e436]: AI-Augmented Domain Specialist
+                      - text: "needs depth in evaluation (in their domain), trust boundaries (for their domain’s risk profile), and specification precision. Salary premium: 23–35% over equivalent roles. The compliance officer who evaluates agent output. The financial analyst who designs evaluation criteria for AI due diligence."
+                    - heading "How to prove it Link" [level=2] [ref=e437]:
+                      - text: How to prove it
+                      - button "Link" [ref=e440] [cursor=pointer]:
+                        - img [ref=e441]
+                    - paragraph [ref=e444]: Credentials matter less than artifacts. The ecosystem is young enough that publishing real work gets noticed, and “noticed” in market two means inbound recruiter messages, not job applications.
+                    - paragraph [ref=e445]: "For architects, that means shipping a production-quality agent system or tool integration and open-sourcing it. For PMs, it means publishing an agent product spec: problem definition, evaluation criteria, escalation logic, trust boundaries, cost model. Almost nobody is producing these, and the document demonstrates you can specify what an agent should do precisely enough that a team could build it. For ops, publish a monitoring framework. For domain specialists, publish an evaluation framework for your field: what the agent should catch, what it shouldn’t miss, how you’d measure accuracy, where the human checkpoints go."
+                    - paragraph [ref=e446]: "Two artifacts work for everyone regardless of track. The first is a failure post-mortem: build a system, watch it fail, analyze why using named failure patterns, document the fix. Rare, valuable, memorable. The second is underused and almost unfakeable: record yourself working with an AI system and narrate your decisions in real time. Not a polished tutorial. A real working session where you specify, run, evaluate, troubleshoot, and iterate, explaining why you made each call. The transparency is the credential."
+                    - heading "The twelve-week path Link" [level=2] [ref=e447]:
+                      - text: The twelve-week path
+                      - button "Link" [ref=e450] [cursor=pointer]:
+                        - img [ref=e451]
+                    - paragraph [ref=e454]: Two tracks, both free to start, both producing concrete artifacts that serve as your portfolio.
+                    - paragraph [ref=e455]:
+                      - strong [ref=e456]: "Engineer/Architect Track:"
+                      - text: "Weeks 1–2 are foundations (Anthropic Academy: Claude 101 and AI Fluency, free). Weeks 3–5 are your first real build: “Building with the Claude API” (8.1 hours, free) where you construct a working agent and start your failure log. Weeks 6–7 shift to tool integration through MCP courses, where you connect an agent to a real system and publish the integration. Weeks 8–9 are Claude Code training: configure for a real codebase, run multi-agent coding sessions, build your first cost model. Weeks 10–11 are the capstone: build a multi-agent system for a real workflow, write and publish the architecture document, the cost model, and the failure post-mortem. Week 12: sit the CCA exam if you have Partner Network access ($99), and publish your portfolio regardless."
+                    - paragraph [ref=e457]:
+                      - strong [ref=e458]: "PM / Ops / Domain Specialist Track:"
+                      - text: "Weeks 1–3 are conceptual foundations (same Anthropic Academy courses plus the conceptual portions of the API course). Weeks 4–6 are where most people stall, because this is where you stop learning about AI and start using it on real tasks from your domain. Every mistake gets categorized by failure pattern. Study published agent architectures and post-mortems alongside your own experiments. Weeks 7–9: write an agent product spec for your domain, defining the system, evaluation criteria, trust boundaries, and cost model. Weeks 10–12: build your domain evaluation framework with test cases, monitoring criteria, and a human review sampling strategy. Publish everything."
+                    - paragraph [ref=e459]: Both paths lead to market two. The difference between them and a weekend certification course is that you finish with artifacts, not badges.
+                    - heading "Where you actually stand Link" [level=2] [ref=e460]:
+                      - text: Where you actually stand
+                      - button "Link" [ref=e463] [cursor=pointer]:
+                        - img [ref=e464]
+                    - paragraph [ref=e467]: Twelve weeks is a plan. But a plan assumes you know your starting point, and most people don’t. I’ve watched experienced professionals overestimate their evaluation skills and underestimate their specification gaps. I’ve watched engineers assume decomposition was a strength because they’re good at project management, only to discover that agent-specific constraints changed the entire picture. The gap between where you think you are and where you actually are is where wasted time lives.
+                    - paragraph [ref=e468]:
+                      - strong [ref=e469]:
+                        - link "AiCred" [ref=e470] [cursor=pointer]:
+                          - /url: https://www.aicred.ai/
+                      - text: is something we built back in
+                      - strong [ref=e471]:
+                        - link "November 2025" [ref=e472] [cursor=pointer]:
+                          - /url: https://natesnewsletter.substack.com/p/nobody-could-measure-ai-skills-so
+                      - text: to close that gap. The assessment takes 20-30 minutes and works like a real conversation, not a multiple-choice quiz you can game. You get a fluency score across the core competencies, an honest breakdown of where you’re strong versus where you’re fooling yourself, and a personalized learning path built around your actual gaps. The evaluation costs one credit. The training that follows is free.
+                    - paragraph [ref=e473]: If you’re about to invest twelve weeks, it’s worth twenty minutes to make sure you’re investing them in the right place.
+                    - heading "The window Link" [level=2] [ref=e474]:
+                      - text: The window
+                      - button "Link" [ref=e477] [cursor=pointer]:
+                        - img [ref=e478]
+                    - paragraph [ref=e481]: Accenture is training 30,000 professionals on Claude and its entire 700,000-person workforce on agentic AI. Cognizant has enabled 350,000 employees. Every major professional services firm on Earth is deciding that these seven skills are the next table-stakes competency.
+                    - paragraph [ref=e482]: When AWS launched cloud certifications in 2013, they were optional. By 2018 they were required. Five years. The AI skill cycle is compressing faster.
+                    - paragraph [ref=e483]: The person who builds these skills now has a structural advantage, not because the knowledge is secret, but because the judgment that comes from building real systems, watching them fail, and knowing why they failed cannot be crammed in a weekend. Every week of practice compounds. The failure patterns become intuition. The specification precision becomes reflexive.
+                    - figure [ref=e485]:
+                      - link [ref=e486]:
+                        - /url: https://substackcdn.com/image/fetch/$s_!a7wn!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F180c01ba-60cb-4f61-b88c-3df2b4f30359_1024x1024.png
+                        - generic [ref=e490]:
+                          - button [ref=e491] [cursor=pointer]:
+                            - img [ref=e492]
+                          - button [ref=e495] [cursor=pointer]:
+                            - img [ref=e496]
+                    - paragraph
+                  - generic [ref=e502]:
+                    - generic [ref=e504]:
+                      - link "View HBMustang's profile" [ref=e506] [cursor=pointer]:
+                        - /url: https://substack.com/profile/21597953-hbmustang
+                        - generic "HBMustang" [ref=e508]:
+                          - img "HBMustang's avatar" [ref=e510]
+                      - link "View Brandon Smith's profile" [ref=e512] [cursor=pointer]:
+                        - /url: https://substack.com/profile/1138386-brandon-smith
+                        - generic "Brandon Smith" [ref=e514]:
+                          - img "Brandon Smith's avatar" [ref=e516]
+                      - link "View Stéphane Furderer's profile" [ref=e518] [cursor=pointer]:
+                        - /url: https://substack.com/profile/74824661-stephane-furderer
+                        - generic "Stéphane Furderer" [ref=e520]:
+                          - img "Stéphane Furderer's avatar" [ref=e522]
+                      - link "View Vitas Jasiukonis's profile" [ref=e524] [cursor=pointer]:
+                        - /url: https://substack.com/profile/160968471-vitas-jasiukonis
+                        - generic "Vitas Jasiukonis" [ref=e526]:
+                          - img "Vitas Jasiukonis's avatar" [ref=e528]
+                      - link "View Josh Walker's profile" [ref=e530] [cursor=pointer]:
+                        - /url: https://substack.com/profile/84985349-josh-walker
+                        - generic "Josh Walker" [ref=e532]:
+                          - img "Josh Walker's avatar" [ref=e534]
+                    - generic [ref=e536]:
+                      - generic [ref=e537] [cursor=pointer]: 107 Likes
+                      - text: ∙
+                      - link "3 Restacks" [ref=e539] [cursor=pointer]:
+                        - /url: https://substack.com/note/p-191883965/restacks?utm_source=substack&utm_content=facepile-restacks
+                  - generic [ref=e540]:
+                    - generic [ref=e541]:
+                      - heading "Discussion about this video" [level=4] [ref=e542]
+                      - tablist "Select discussion type" [ref=e546]:
+                        - tab "Comments" [selected] [ref=e547] [cursor=pointer]
+                        - tab "Restacks" [ref=e548] [cursor=pointer]
+                    - generic [ref=e553]:
+                      - generic [ref=e555]:
+                        - generic "Jim Powers" [ref=e557]:
+                          - img "Jim Powers's avatar" [ref=e559]
+                        - textbox "Write a comment..." [ref=e561]
+                      - generic [ref=e564]:
+                        - article "Comment by anil gunjal" [ref=e568]:
+                          - link "View anil gunjal's profile" [ref=e571] [cursor=pointer]:
+                            - /url: https://substack.com/profile/2293363-anil-gunjal?utm_source=comment
+                            - generic "anil gunjal" [ref=e573]:
+                              - img "anil gunjal's avatar" [ref=e575]
+                          - generic [ref=e576]:
+                            - generic [ref=e577]:
+                              - generic [ref=e580]:
+                                - generic [ref=e582]:
+                                  - link "anil gunjal" [ref=e585] [cursor=pointer]:
+                                    - /url: https://substack.com/profile/2293363-anil-gunjal?utm_source=substack-feed-item
+                                  - img [ref=e588] [cursor=pointer]
+                                - link "5h" [ref=e591] [cursor=pointer]:
+                                  - /url: https://natesnewsletter.substack.com/p/your-ai-credentials-dont-matter-your/comment/233725480
+                              - button "Ellipsis" [ref=e594] [cursor=pointer]:
+                                - img [ref=e595]
+                            - paragraph [ref=e600]: awesome stuff - I would love to see the course and a path towards this
+                            - generic [ref=e601]:
+                              - link "Like (1)" [ref=e603] [cursor=pointer]:
+                                - /url: javascript:void(0)
+                                - generic [ref=e604]:
+                                  - img [ref=e606]:
+                                    - img [ref=e608]
+                                  - generic [ref=e610]: Like (1)
+                              - generic [ref=e613] [cursor=pointer]:
+                                - img [ref=e614]
+                                - generic [ref=e616]: Reply
+                              - generic [ref=e619] [cursor=pointer]:
+                                - img [ref=e620]
+                                - generic [ref=e623]: Share
+                        - article "Comment by A.J. Cave" [ref=e627]:
+                          - link "View A.J. Cave's profile" [ref=e630] [cursor=pointer]:
+                            - /url: https://substack.com/profile/112566-aj-cave?utm_source=comment
+                            - generic "A.J. Cave" [ref=e632]:
+                              - img "A.J. Cave's avatar" [ref=e634]
+                          - generic [ref=e635]:
+                            - generic [ref=e636]:
+                              - generic [ref=e639]:
+                                - generic [ref=e641]:
+                                  - link "A.J. Cave" [ref=e644] [cursor=pointer]:
+                                    - /url: https://substack.com/profile/112566-aj-cave?utm_source=substack-feed-item
+                                  - img [ref=e647] [cursor=pointer]
+                                - link "A.J. Cave" [ref=e654] [cursor=pointer]:
+                                  - /url: https://ajcave.substack.com/?utm_source=substack-feed-item&utm_content=comment_metadata
+                                  - generic [ref=e655]: A.J. Cave
+                                - link "5h" [ref=e656] [cursor=pointer]:
+                                  - /url: https://natesnewsletter.substack.com/p/your-ai-credentials-dont-matter-your/comment/233722374
+                              - button "Ellipsis" [ref=e659] [cursor=pointer]:
+                                - img [ref=e660]
+                            - paragraph [ref=e665]: This is the perfect alternative to Linkedin for the new AI wave.
+                            - generic [ref=e666]:
+                              - link "Like (1)" [ref=e668] [cursor=pointer]:
+                                - /url: javascript:void(0)
+                                - generic [ref=e669]:
+                                  - img [ref=e671]:
+                                    - img [ref=e673]
+                                  - generic [ref=e675]: Like (1)
+                              - generic [ref=e678] [cursor=pointer]:
+                                - img [ref=e679]
+                                - generic [ref=e681]: Reply
+                              - generic [ref=e684] [cursor=pointer]:
+                                - img [ref=e685]
+                                - generic [ref=e688]: Share
+                        - article "Comment by Renee" [ref=e692]:
+                          - link "View Renee's profile" [ref=e695] [cursor=pointer]:
+                            - /url: https://substack.com/profile/4055547-renee?utm_source=comment
+                            - generic "Renee" [ref=e697]:
+                              - img "Renee's avatar" [ref=e699]
+                          - generic [ref=e700]:
+                            - generic [ref=e701]:
+                              - generic [ref=e704]:
+                                - generic [ref=e706]:
+                                  - link "Renee" [ref=e709] [cursor=pointer]:
+                                    - /url: https://substack.com/profile/4055547-renee?utm_source=substack-feed-item
+                                  - img [ref=e712] [cursor=pointer]
+                                - link "1h" [ref=e715] [cursor=pointer]:
+                                  - /url: https://natesnewsletter.substack.com/p/your-ai-credentials-dont-matter-your/comment/233847104
+                              - button "Ellipsis" [ref=e718] [cursor=pointer]:
+                                - img [ref=e719]
+                            - paragraph [ref=e724]: Where is the course?
+                            - generic [ref=e725]:
+                              - link "Like" [ref=e727] [cursor=pointer]:
+                                - /url: javascript:void(0)
+                                - generic [ref=e728]:
+                                  - img [ref=e730]:
+                                    - img [ref=e732]
+                                  - generic [ref=e734]: Like
+                              - generic [ref=e737] [cursor=pointer]:
+                                - img [ref=e738]
+                                - generic [ref=e740]: Reply
+                              - generic [ref=e743] [cursor=pointer]:
+                                - img [ref=e744]
+                                - generic [ref=e747]: Share
+                        - article "Comment by Eric Rhodes" [ref=e751]:
+                          - link "View Eric Rhodes's profile" [ref=e754] [cursor=pointer]:
+                            - /url: https://substack.com/profile/20900765-eric-rhodes?utm_source=comment
+                            - generic "Eric Rhodes" [ref=e756]:
+                              - img "Eric Rhodes's avatar" [ref=e758]
+                          - generic [ref=e759]:
+                            - generic [ref=e760]:
+                              - generic [ref=e763]:
+                                - generic [ref=e765]:
+                                  - link "Eric Rhodes" [ref=e768] [cursor=pointer]:
+                                    - /url: https://substack.com/profile/20900765-eric-rhodes?utm_source=substack-feed-item
+                                  - img [ref=e771] [cursor=pointer]
+                                - link "3h" [ref=e774] [cursor=pointer]:
+                                  - /url: https://natesnewsletter.substack.com/p/your-ai-credentials-dont-matter-your/comment/233798892
+                              - button "Ellipsis" [ref=e777] [cursor=pointer]:
+                                - img [ref=e778]
+                            - paragraph [ref=e783]: Thank you Nate. Excellent summary and action items. Love your infographics / slide animations. Are you creating those in NotebookLM? They really help...
+                            - generic [ref=e784]:
+                              - link "Like" [ref=e786] [cursor=pointer]:
+                                - /url: javascript:void(0)
+                                - generic [ref=e787]:
+                                  - img [ref=e789]:
+                                    - img [ref=e791]
+                                  - generic [ref=e793]: Like
+                              - generic [ref=e796] [cursor=pointer]:
+                                - img [ref=e797]
+                                - generic [ref=e799]: Reply
+                              - generic [ref=e802] [cursor=pointer]:
+                                - img [ref=e803]
+                                - generic [ref=e806]: Share
+                        - article "Comment by Michael" [ref=e810]:
+                          - link "View Michael's profile" [ref=e813] [cursor=pointer]:
+                            - /url: https://substack.com/profile/1782688-michael?utm_source=comment
+                            - generic "Michael" [ref=e815]:
+                              - img "Michael's avatar" [ref=e817]
+                          - generic [ref=e818]:
+                            - generic [ref=e819]:
+                              - generic [ref=e822]:
+                                - generic [ref=e824]:
+                                  - link "Michael" [ref=e827] [cursor=pointer]:
+                                    - /url: https://substack.com/profile/1782688-michael?utm_source=substack-feed-item
+                                  - img [ref=e830] [cursor=pointer]
+                                - link "Modern Midlifers" [ref=e837] [cursor=pointer]:
+                                  - /url: https://modernmidlifers.substack.com/?utm_source=substack-feed-item&utm_content=comment_metadata
+                                  - generic [ref=e838]: Modern Midlifers
+                                - link "5h" [ref=e839] [cursor=pointer]:
+                                  - /url: https://natesnewsletter.substack.com/p/your-ai-credentials-dont-matter-your/comment/233733945
+                              - button "Ellipsis" [ref=e842] [cursor=pointer]:
+                                - img [ref=e843]
+                            - generic [ref=e847]:
+                              - paragraph [ref=e848]: The credentials might get you through the automated resume scanner, unless these things are already tuning out the credentials. lol
+                              - paragraph [ref=e849]: The artifacts are what can get you in and keep you in long enough to prove you're worth keeping through the 90-day probation period.
+                            - generic [ref=e850]:
+                              - link "Like" [ref=e852] [cursor=pointer]:
+                                - /url: javascript:void(0)
+                                - generic [ref=e853]:
+                                  - img [ref=e855]:
+                                    - img [ref=e857]
+                                  - generic [ref=e859]: Like
+                              - generic [ref=e862] [cursor=pointer]:
+                                - img [ref=e863]
+                                - generic [ref=e865]: Reply
+                              - generic [ref=e868] [cursor=pointer]:
+                                - img [ref=e869]
+                                - generic [ref=e872]: Share
+                        - article "Comment by Fernando Lopez Cisneros" [ref=e876]:
+                          - link "View Fernando Lopez Cisneros's profile" [ref=e879] [cursor=pointer]:
+                            - /url: https://substack.com/profile/347246031-fernando-lopez-cisneros?utm_source=comment
+                            - generic "Fernando Lopez Cisneros" [ref=e881]:
+                              - img "Fernando Lopez Cisneros's avatar" [ref=e883]
+                          - generic [ref=e884]:
+                            - generic [ref=e885]:
+                              - generic [ref=e888]:
+                                - generic [ref=e890]:
+                                  - link "Fernando Lopez Cisneros" [ref=e893] [cursor=pointer]:
+                                    - /url: https://substack.com/profile/347246031-fernando-lopez-cisneros?utm_source=substack-feed-item
+                                  - img [ref=e896] [cursor=pointer]
+                                - link "6h" [ref=e899] [cursor=pointer]:
+                                  - /url: https://natesnewsletter.substack.com/p/your-ai-credentials-dont-matter-your/comment/233714074
+                              - button "Ellipsis" [ref=e902] [cursor=pointer]:
+                                - img [ref=e903]
+                            - paragraph [ref=e908]: Like always, you are very emotional and very helpful
+                            - generic [ref=e909]:
+                              - link "Like" [ref=e911] [cursor=pointer]:
+                                - /url: javascript:void(0)
+                                - generic [ref=e912]:
+                                  - img [ref=e914]:
+                                    - img [ref=e916]
+                                  - generic [ref=e918]: Like
+                              - generic [ref=e921] [cursor=pointer]:
+                                - img [ref=e922]
+                                - generic [ref=e924]: Reply
+                              - generic [ref=e927] [cursor=pointer]:
+                                - img [ref=e928]
+                                - generic [ref=e931]: Share
+                        - article "Comment by Francesca Archila" [ref=e935]:
+                          - link "View Francesca Archila's profile" [ref=e938] [cursor=pointer]:
+                            - /url: https://substack.com/profile/9950523-francesca-archila?utm_source=comment
+                            - generic "Francesca Archila" [ref=e940]:
+                              - img "Francesca Archila's avatar" [ref=e942]
+                          - generic [ref=e943]:
+                            - generic [ref=e944]:
+                              - generic [ref=e947]:
+                                - generic [ref=e949]:
+                                  - link "Francesca Archila" [ref=e952] [cursor=pointer]:
+                                    - /url: https://substack.com/profile/9950523-francesca-archila?utm_source=substack-feed-item
+                                  - img [ref=e955] [cursor=pointer]
+                                - link "Francesca Archila" [ref=e962] [cursor=pointer]:
+                                  - /url: https://franarchila.substack.com/?utm_source=substack-feed-item&utm_content=comment_metadata
+                                  - generic [ref=e963]: Francesca Archila
+                                - link "6h" [ref=e964] [cursor=pointer]:
+                                  - /url: https://natesnewsletter.substack.com/p/your-ai-credentials-dont-matter-your/comment/233687158
+                              - button "Ellipsis" [ref=e967] [cursor=pointer]:
+                                - img [ref=e968]
+                            - paragraph [ref=e973]: you are the best and most helpful AI prespective person ever!
+                            - generic [ref=e974]:
+                              - link "Like" [ref=e976] [cursor=pointer]:
+                                - /url: javascript:void(0)
+                                - generic [ref=e977]:
+                                  - img [ref=e979]:
+                                    - img [ref=e981]
+                                  - generic [ref=e983]: Like
+                              - generic [ref=e986] [cursor=pointer]:
+                                - img [ref=e987]
+                                - generic [ref=e989]: Reply
+                              - generic [ref=e992] [cursor=pointer]:
+                                - img [ref=e993]
+                                - generic [ref=e996]: Share
+                        - article "Comment by PMJK" [ref=e1000]:
+                          - link "View PMJK's profile" [ref=e1003] [cursor=pointer]:
+                            - /url: https://substack.com/profile/53799323-pmjk?utm_source=comment
+                            - generic "PMJK" [ref=e1005]:
+                              - img "PMJK's avatar" [ref=e1007]
+                          - generic [ref=e1008]:
+                            - generic [ref=e1009]:
+                              - generic [ref=e1012]:
+                                - generic [ref=e1014]:
+                                  - link "PMJK" [ref=e1017] [cursor=pointer]:
+                                    - /url: https://substack.com/profile/53799323-pmjk?utm_source=substack-feed-item
+                                  - img [ref=e1020] [cursor=pointer]
+                                - link "PMJK's Substack" [ref=e1027] [cursor=pointer]:
+                                  - /url: https://pauljulich.substack.com/?utm_source=substack-feed-item&utm_content=comment_metadata
+                                  - generic [ref=e1028]: PMJK's Substack
+                                - link "9h" [ref=e1029] [cursor=pointer]:
+                                  - /url: https://natesnewsletter.substack.com/p/your-ai-credentials-dont-matter-your/comment/233599278
+                              - button "Ellipsis" [ref=e1032] [cursor=pointer]:
+                                - img [ref=e1033]
+                            - paragraph [ref=e1038]: Nate another highly valuable session. Thanks for your work.
+                            - generic [ref=e1039]:
+                              - link "Like" [ref=e1041] [cursor=pointer]:
+                                - /url: javascript:void(0)
+                                - generic [ref=e1042]:
+                                  - img [ref=e1044]:
+                                    - img [ref=e1046]
+                                  - generic [ref=e1048]: Like
+                              - generic [ref=e1051] [cursor=pointer]:
+                                - img [ref=e1052]
+                                - generic [ref=e1054]: Reply
+                              - generic [ref=e1057] [cursor=pointer]:
+                                - img [ref=e1058]
+                                - generic [ref=e1061]: Share
+              - complementary "Sidebar content" [ref=e1063]:
+                - generic [ref=e1065] [cursor=pointer]:
+                  - link "Nate’s Substack" [ref=e1066]:
+                    - /url: https://natesnewsletter.substack.com
+                    - img "Nate’s Substack" [ref=e1067]
+                  - generic [ref=e1068]: Nate's Notebook
+                  - generic [ref=e1070]: Welcome to my podcast! In these audio reviews of my newsletters, I am to break down complex AI topics in a way that's approachable and relatable. I want you to walk away with the confidence to leverage AI more effectively at home and at work!
+                - generic [ref=e1071]:
+                  - region [ref=e1072]:
+                    - generic [ref=e1073]: Listen on
+                    - generic [ref=e1074]:
+                      - generic [ref=e1078] [cursor=pointer]: Substack App
+                      - generic [ref=e1082] [cursor=pointer]: RSS Feed
+                      - generic [ref=e1083] [cursor=pointer]:
+                        - img [ref=e1085]
+                        - generic [ref=e1088]: Email mobile setup link
+                  - region "Appears in episode" [ref=e1089]:
+                    - generic [ref=e1090]: Appears in episode
+                    - generic [ref=e1092]:
+                      - generic [ref=e1093]:
+                        - link "View Nate's profile" [ref=e1095] [cursor=pointer]:
+                          - /url: https://substack.com/@natesnewsletter?utm_source=author-byline-face-podcast
+                          - generic "Nate" [ref=e1097]:
+                            - img "Nate's avatar" [ref=e1099]
+                        - img [ref=e1103] [cursor=pointer]
+                      - link "Nate" [ref=e1109] [cursor=pointer]:
+                        - /url: https://substack.com/@natesnewsletter
+                  - region "Recent episodes" [ref=e1110]:
+                    - generic [ref=e1111]: Recent Episodes
+                    - region "Recent episodes" [ref=e1112]:
+                      - article "Post preview for You're using the wrong kind of agent. Here's the one question that tells you which one you actually need + 3 diagnostic prompts" [ref=e1113] [cursor=pointer]:
+                        - generic [ref=e1114]:
+                          - button "s" [ref=e1117]:
+                            - img "Play" [ref=e1118]
+                          - generic [ref=e1122]:
+                            - link "You're using the wrong kind of agent. Here's the one question that tells you which one you actually need + 3 diagnostic prompts" [ref=e1124]:
+                              - /url: https://natesnewsletter.substack.com/p/there-are-4-kinds-of-agents-and-youre
+                            - generic [ref=e1125]:
+                              - img [ref=e1127]
+                              - time [ref=e1130]: Mar 25
+                              - text: •
+                              - link "Nate" [ref=e1132]:
+                                - /url: https://substack.com/@natesnewsletter
+                      - article "Post preview for Accenture booked $2.2 billion in AI consulting last quarter. Here's the part your engineering team could have handled for free." [ref=e1133] [cursor=pointer]:
+                        - generic [ref=e1134]:
+                          - button "s" [ref=e1137]:
+                            - img "Play" [ref=e1138]
+                          - generic [ref=e1142]:
+                            - link "Accenture booked $2.2 billion in AI consulting last quarter. Here's the part your engineering team could have handled for free." [ref=e1144]:
+                              - /url: https://natesnewsletter.substack.com/p/youre-about-to-spend-millions-on
+                            - generic [ref=e1145]:
+                              - img [ref=e1147]
+                              - time [ref=e1150]: Mar 24
+                              - text: •
+                              - link "Nate" [ref=e1152]:
+                                - /url: https://substack.com/@natesnewsletter
+                      - article "Post preview for 5 AI agents, 5 contradictory bets, 3 questions that tell you which one fits — and the prompts to pressure-test your answer" [ref=e1153] [cursor=pointer]:
+                        - generic [ref=e1154]:
+                          - button "s" [ref=e1157]:
+                            - img "Play" [ref=e1158]
+                          - generic [ref=e1162]:
+                            - link "5 AI agents, 5 contradictory bets, 3 questions that tell you which one fits — and the prompts to pressure-test your answer" [ref=e1164]:
+                              - /url: https://natesnewsletter.substack.com/p/5-ai-agents-5-contradictory-bets
+                            - generic [ref=e1165]:
+                              - img [ref=e1167]
+                              - time [ref=e1170]: Mar 23
+                              - text: •
+                              - link "Nate" [ref=e1172]:
+                                - /url: https://substack.com/@natesnewsletter
+                      - 'article "Post preview for Executive Briefing: 80% of what makes your product worth buying lives in people''s heads. Agents can''t read it. Here''s what to do about it + 4 prompts to start this week" [ref=e1173] [cursor=pointer]':
+                        - generic [ref=e1174]:
+                          - button "s" [ref=e1177]:
+                            - img "Play" [ref=e1178]
+                          - generic [ref=e1182]:
+                            - 'link "Executive Briefing: 80% of what makes your product worth buying lives in people''s heads. Agents can''t read it. Here''s what to do about it …" [ref=e1184]':
+                              - /url: https://natesnewsletter.substack.com/p/executive-briefing-your-systems-are
+                            - generic [ref=e1185]:
+                              - img [ref=e1187]
+                              - time [ref=e1194]: Mar 22
+                              - text: •
+                              - link "Nate" [ref=e1196]:
+                                - /url: https://substack.com/@natesnewsletter
+                      - article "Post preview for 55% of employers regret AI-driven layoffs. The agents are good at tasks and terrible at jobs. Here's what that means for your team and the 3 prompts that close the gap." [ref=e1197] [cursor=pointer]:
+                        - generic [ref=e1198]:
+                          - button "s" [ref=e1201]:
+                            - img "Play" [ref=e1202]
+                          - generic [ref=e1206]:
+                            - link "55% of employers regret AI-driven layoffs. The agents are good at tasks and terrible at jobs. Here's what that means for your team and the 3…" [ref=e1208]:
+                              - /url: https://natesnewsletter.substack.com/p/55-of-employers-regret-ai-driven
+                            - generic [ref=e1209]:
+                              - img [ref=e1211]
+                              - time [ref=e1214]: Mar 21
+                              - text: •
+                              - link "Nate" [ref=e1216]:
+                                - /url: https://substack.com/@natesnewsletter
+                      - article "Post preview for The feature nobody covered this week just turned your AI memory system into an autonomous agent + the guide to wire it up" [ref=e1217] [cursor=pointer]:
+                        - generic [ref=e1218]:
+                          - button "s" [ref=e1221]:
+                            - img "Play" [ref=e1222]
+                          - generic [ref=e1226]:
+                            - link "The feature nobody covered this week just turned your AI memory system into an autonomous agent + the guide to wire it up" [ref=e1228]:
+                              - /url: https://natesnewsletter.substack.com/p/your-ai-agent-needs-three-things
+                            - generic [ref=e1229]:
+                              - img [ref=e1231]
+                              - time [ref=e1234]: Mar 20
+                              - text: •
+                              - link "Nate" [ref=e1236]:
+                                - /url: https://substack.com/@natesnewsletter
+                      - article "Post preview for Most AI companies are renting their position. These 4 prompts tell you if yours is one of them." [ref=e1237] [cursor=pointer]:
+                        - generic [ref=e1238]:
+                          - button "s" [ref=e1241]:
+                            - img "Play" [ref=e1242]
+                          - generic [ref=e1246]:
+                            - link "Most AI companies are renting their position. These 4 prompts tell you if yours is one of them." [ref=e1248]:
+                              - /url: https://natesnewsletter.substack.com/p/perplexity-shipped-its-best-product
+                            - generic [ref=e1249]:
+                              - img [ref=e1251]
+                              - time [ref=e1254]: Mar 19
+                              - text: •
+                              - link "Nate" [ref=e1256]:
+                                - /url: https://substack.com/@natesnewsletter
+      - generic [ref=e1259]:
+        - generic [ref=e1260]:
+          - generic [ref=e1261]: © 2026 Nate
+          - text: ·
+          - link "Privacy" [ref=e1262] [cursor=pointer]:
+            - /url: https://substack.com/privacy
+          - text: ∙
+          - link "Terms" [ref=e1263] [cursor=pointer]:
+            - /url: https://substack.com/tos
+          - text: ∙
+          - link "Collection notice" [ref=e1264] [cursor=pointer]:
+            - /url: https://substack.com/ccpa#personal-data-collected
+        - generic [ref=e1265]:
+          - link "Start your Substack" [ref=e1266] [cursor=pointer]:
+            - /url: https://substack.com/signup?utm_source=substack&utm_medium=web&utm_content=footer
+            - img [ref=e1267]
+            - text: Start your Substack
+          - link "Get the app" [ref=e1272] [cursor=pointer]:
+            - /url: https://substack.com/app/app-store-redirect?utm_campaign=app-marketing&utm_content=web-footer-button
+        - generic [ref=e1273]:
+          - link "Substack" [ref=e1274] [cursor=pointer]:
+            - /url: https://substack.com
+          - text: is the home for great culture
+    - region "Notifications (F8)":
+      - list
+  - generic [ref=e1276]:
+    - generic [ref=e1281]:
+      - generic [ref=e1283]: Play
+      - button "K" [ref=e1285]:
+        - generic [ref=e1286]: K
+    - tooltip "Play K" [ref=e1287]:
+      - generic [ref=e1292]:
+        - generic [ref=e1294]: Play
+        - button "K" [ref=e1296]:
+          - generic [ref=e1297]: K
