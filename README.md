@@ -1,8 +1,28 @@
 # Flywheel
 
-This is not a _true_ coding project, this is a "meta project," we're
-going to write specs and documents that will be used by an independent
-agent to do all the coding in a "lights-out" manner.
+Flywheel is an experiment in building software to build software: specs
+in, no humans involved, software out. It is an exploration of the
+software-factory idea (https://factory.strongdm.ai/), written in Go. The
+repository holds the orchestration driver, the isolation layer (an MCP
+broker, chroot jails, git enforcement) and the specs, prompts and
+post-mortems from three complete build rounds.
+
+## Status (October 2026)
+
+- Three rounds complete: a Markdown spec set went in, a working Go web
+  application came out, and each round's post-mortem fed the next
+  (`feedback/`). The round-over-round table below has the numbers.
+- The driver (`cmd/flywheel/`) runs Claude Code. The driver and the jail
+  have nothing vendor-specific in them, so other agents could run through
+  them; only Claude Code has so far.
+- The isolation layer (`broker/`, `mcp/`, `jail/`, `gitops/`) is built and
+  tested here, and `cmd/jail-duo/` demonstrates two jailed agents talking
+  to each other only through the MCP broker. Wiring it into the round
+  driver (Round 4 below) is where the project stopped.
+- Why it stopped: the functionality explored here is becoming a commodity,
+  with several techniques now reaching the same result; it was costly in
+  time and tokens to build to this point; and it had taught what it was
+  built to teach.
 
 ## Rules of Engagement
 
@@ -91,13 +111,13 @@ Per-spec quality gates: Build → Code Review → Security Review → Dev Test. 
 - Per-phase JSONL logging with timing
 - Filters `CLAUDECODE` env var to prevent nested-session detection
 
-## Round 4 (Planned)
+## Round 4: the isolation layer (built and demonstrated, not yet run as a round)
 
-Round 4 is a major architectural evolution. See `feedback/round-4-ideas.md` for the full design and `docs/meeting-notes/2026-03-15-round4-*.md` for detailed discussion notes.
+Round 4 is a major architectural evolution. See `feedback/round-4-ideas.md` for the full design and `docs/meeting-notes/2026-03-15-round4-*.md` for detailed discussion notes. The packages below exist in this repository with tests; `cmd/jail-duo/` runs two jailed agents against the broker; the round driver does not use them yet.
 
 **Key changes:**
 
-- **Mechanical isolation:** Absorb `broker/`, `mcp/`, `jail/`, `gitops/` packages from [`lightweight-containers`](https://github.com/corruptmemory/lightweight-containers) companion project (stress-tested to 76+ rounds). Each agent runs in a chroot jail with tailored filesystem projections — OS-level enforcement replaces prompt-based "don't touch X." Three-layer isolation: chroot (visibility) → git hooks (commit enforcement) → MCP (coordination enforcement).
+- **Mechanical isolation (built):** `broker/`, `mcp/`, `jail/` and `gitops/`, absorbed from the private `lightweight-containers` companion project (stress-tested to 76+ rounds). Each agent runs in a chroot jail with tailored filesystem projections: on unprivileged user namespaces, with the host toolchain bind-mounted read-only, no root needed. OS-level enforcement replaces prompt-based "don't touch X." Three-layer isolation: chroot (visibility) → git hooks (commit enforcement) → MCP (coordination enforcement).
 
 - **MCP coordination layer:** Agents communicate with the pipeline exclusively through MCP tools backed by an in-process actor-based event broker. PO requests, done files, and check results are abstracted behind tool calls. The MCP enforces constraints mechanically (can't finish with outstanding PO requests, phase-appropriate done file format, identity isolation). Push-based events enable sub-second `wait_for_response` without polling.
 
@@ -119,14 +139,15 @@ Inspired by Nate's Substack (Feb 2026) on the Opus 4.6 inflection point: https:/
 
 ## Starting Point
 
-We start by deep investigation of the "idpair-central" project located
-at `~/idpair/idpair-central`.
+We start by deep investigation of the source project: a Go web
+application kept outside this repository, which the building agents
+never see (see Rules of Engagement).
 
 1. Load up your go-actor skill
-2. Thoroughly investigate the source code for `idpair-central`, ask
+2. Thoroughly investigate the source code for the source project, ask
    questions as needed.
-3. There are some "example CSVs" located at `~/idpair/example-csvs`,
-   some of them are good, and some of them are deliberately bad. The
+3. There are some "example CSVs" for it, kept outside this repository,
+   some of them good and some of them deliberately bad. The
    "building agents" are allowed to know about these files. Encourage
    your "building agent" to build tooling to generate synthetic CSVs,
    both valid and invalid for testing. This tooling can be used
